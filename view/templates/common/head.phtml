@@ -52,5 +52,7 @@ endif;
 <?php endif; ?>
 <!--加载配置页头-->
 <?php
-echo $this->getHeader()->getHtml();
+if ($this->getHeader()) {
+    echo $this->getHeader()->getHtml();
+}
 ?>
