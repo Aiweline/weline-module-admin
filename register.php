@@ -14,5 +14,9 @@ Register::register(
     'Weline_Admin',
     __DIR__,
     '1.0.1',
-    '<a href="https://bbs.aiweline.com">Admin后台管理模块</a>'
+    '<a href="https://bbs.aiweline.com">Admin后台管理模块</a>',
+    [
+        'Weline_SystemConfig',
+        'Weline_Backend',
+    ]
 );
