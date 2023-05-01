@@ -55,8 +55,6 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     public function postPost()
     {
-        $this->redirectReferer();
-        die;
         # 已经登录直接进入后台
         if ($this->session->isLogin()) {
             // 有来源网址就跳回来源网址
@@ -128,11 +126,12 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         # 跳转首页
         $this->redirect($this->_url->getBackendUrl('admin'));
     }
-    
-    private function redirectReferer(){
-        $referer = $this->session->getData('referer')?:$this->request->getServer('HTTP_REFERER');
+
+    private function redirectReferer()
+    {
+        $referer = $this->session->getData('referer') ?: $this->request->getServer('HTTP_REFERER');
         if ($referer) {
-            if($this->request->getUrlPath($referer)!==$this->request->getUrlPath()){
+            if ($this->request->getUrlPath($referer) !== $this->request->getUrlPath()) {
                 $this->redirect($referer);
             }
         }
@@ -162,7 +161,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         # --3 区域填充 int imagefill(int im, int x, int y, int col) (x,y) 所在的区域着色,col 表示欲涂上的颜色
         imagefill($image, 0, 0, $bgcolor);
         # --4 设置变量
-        $captcha_code = "";
+        $captcha_code = '';
         # --5 生成随机数字
         for ($i = 0; $i < 6; $i++) {
             # --5-1 设置字体大小
