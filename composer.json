@@ -3,7 +3,8 @@
   "description": "WelineFramework admin module",
   "type": "weline-module",
   "require": {
-    "php": "^8.0"
+    "php": "^8.0",
+    "weline/framework": "^1.0"
   },
   "authors": [
     {

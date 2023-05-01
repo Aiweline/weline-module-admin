@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Weline\Admin\Controller;
 
 use Weline\Framework\App\Controller\BackendController;
-
+use Weline\Admin\Observer\BackendWhitelistUrl;
 class BaseController extends BackendController
 {
     public function __init()

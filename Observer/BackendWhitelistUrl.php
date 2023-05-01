@@ -18,6 +18,13 @@ use Weline\Framework\Http\Url;
 
 class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
 {
+    const white_urls = [
+        ['path'=>'admin/login/post'],
+        ['path'=>'admin/login/verificationCode'],
+        ['path'=>'admin/login/verificationcode'],
+        ['path'=>'admin/login/index'],
+        ['path'=>'admin/login'],
+    ];
     private Url $url;
     /**
      * @var \Weline\Acl\Model\WhiteAclSource
@@ -38,13 +45,7 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
      */
     public function execute(Event $event)
     {
-        $white_acl_sources = [
-            ['path'=>'admin/login/post'],
-            ['path'=>'admin/login/verificationCode'],
-            ['path'=>'admin/login/verificationcode'],
-            ['path'=>'admin/login/index'],
-            ['path'=>'admin/login'],
-        ];
+        $white_acl_sources = self::white_urls;
         $this->whiteAclSource->insert($white_acl_sources,'path')->fetch();
     }
 }
