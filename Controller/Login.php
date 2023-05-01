@@ -37,14 +37,9 @@ class Login extends \Weline\Framework\App\Controller\BackendController
     {
         if ($this->session->isLogin()) {
             // 有来源网址就跳回来源网址
-            if ($referer = $this->session->getData('referer')) {
-                if($this->request->getUrlPath($referer)!==$this->request->getUrlPath()){
-                    $this->redirect($referer);
-                }
-            }
+            $this->redirectReferer();
             $this->redirect($this->_url->getBackendUrl('admin'));
         }
-        $this->session->setData('referer', $this->request->getServer('HTTP_REFERER'));
 //        $this->session->delete('backend_disable_login');
         $this->assign('post_url', $this->_url->getBackendUrl('admin/login/post'));
         # 检测验证码
@@ -60,20 +55,13 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     public function postPost()
     {
+        $this->redirectReferer();
+        die;
         # 已经登录直接进入后台
         if ($this->session->isLogin()) {
             // 有来源网址就跳回来源网址
-            if ($referer = $this->session->getData('referer')) {
-                if($this->request->getUrlPath($referer)!==$this->request->getUrlPath()){
-                    $this->redirect($referer);
-                }
-            }
+            $this->redirectReferer();
             $this->redirect($this->_url->getBackendUrl('admin'));
-        }
-
-        if (!$this->request->isPost()) {
-            # get请求404
-            $this->request->getResponse()->noRouter();
         }
         # 验证 form 表单
         if (empty($this->request->getParam('form_key') || ($this->session->getData('form_key') !== $this->request->getParam('form_key')))) {
@@ -136,13 +124,18 @@ class Login extends \Weline\Framework\App\Controller\BackendController
             $this->logout();
         }
         // 有来源网址就跳回来源网址
-        if ($referer = $this->session->getData('referer')) {
+        $this->redirectReferer();
+        # 跳转首页
+        $this->redirect($this->_url->getBackendUrl('admin'));
+    }
+    
+    private function redirectReferer(){
+        $referer = $this->session->getData('referer')?:$this->request->getServer('HTTP_REFERER');
+        if ($referer) {
             if($this->request->getUrlPath($referer)!==$this->request->getUrlPath()){
                 $this->redirect($referer);
             }
         }
-        # 跳转首页
-        $this->redirect($this->_url->getBackendUrl('admin'));
     }
 
     public function logout()

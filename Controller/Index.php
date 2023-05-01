@@ -19,9 +19,4 @@ class Index extends BaseController
     {
         return $this->fetch();
     }
-
-    public function test(): string
-    {
-        return '111111111';
-    }
 }
