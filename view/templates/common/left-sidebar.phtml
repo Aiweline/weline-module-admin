@@ -34,13 +34,11 @@ if (!$themeConfig->getThemeConfig('topnav')):
                         if (!$menu->getData('menu_is_enable')) {
                             continue;
                         }
-                        if (empty($menu->getParentSource())) {
-                            ?>
-                            <li class="menu-title" data-source='{{menu.source}}'><i
-                                        class="<?= $menu->getIcon() ?>"></i><span><?= __($menu->getSourceName()) ?></span>
-                            </li>
-                            <?php
-                        }
+                        ?>
+                        <li class='menu-title' data-source='{{menu.source_id}}'><i
+                                class="<?= $menu->getIcon() ?>"></i><span><?= __($menu->getSourceName()) ?></span>
+                        </li>
+                        <?php
                         $subacls = $menu->getSub();
                         /**@var \Weline\Acl\Model\Acl $subacl */
                         foreach ($subacls as $subacl) {
@@ -49,70 +47,53 @@ if (!$themeConfig->getThemeConfig('topnav')):
                             }
                             $level_3_acls = $subacl->getSub();
                             if (empty($level_3_acls)) {
-                                if ('/' === $subacl->getAction()) {
-                                    ?>
-                                    <li data-source='{{subacl.source}}'>
-                                        <a href="<?= $subacl->getUrl() ?>" data-source="{{subacl.source}}"
-                                           class="waves-effect">
-                                            <i class="<?= $subacl->getIcon() ?>"></i><span
-                                                    class="badge rounded-pill bg-primary float-end">3</span>
-                                            <span><?= __($subacl->getSourceName()) ?></span>
-                                        </a>
-                                    </li>
-                                    <?php
-                                } else {
-                                    ?>
-                                    <li data-source='{{subacl.source}}'>
-                                        <a href="<?= $subacl->getUrl() ?>" data-source='{{subacl.source}}'
-                                           class=" waves-effect">
-                                            <i class="<?= $subacl->getIcon() ?>"></i>
-                                            <span><?= __($subacl->getSourceName()) ?></span>
-                                        </a>
-                                    </li>
-                                    <?php
-                                }
+                                ?>
+                                <li data-source='{{subacl.source_id}}'>
+                                    <a href="<?= $subacl->getUrl() ?>" data-source='{{subacl.source_id}}'
+                                       class=' waves-effect'>
+                                        <i class="<?= $subacl->getIcon() ?>"></i>
+                                        <span><?= __($subacl->getSourceName()) ?></span>
+                                    </a>
+                                </li>
+                                <?php
                             } else {
-                                if ('/' === $subacl->getAction()) {
-                                    ?>
-                                    <li data-source='{{subacl.source}}'>
-                                        <a href="<?= $subacl->getUrl() ?>" data-source='{{subacl.source}}'
-                                           class="waves-effect">
-                                            <i class="<?= $subacl->getIcon() ?>"></i><span
-                                                    class="badge rounded-pill bg-primary float-end">3</span>
-                                            <span><?= __($subacl->getSourceName()) ?></span>
-                                        </a>
-                                    </li>
-                                    <?php
-                                } else {
-                                    ?>
-                                    <li data-source='{{subacl.source}}'>
-                                        <a href="javascript: void(0);" data-source='{{subacl.source}}'
-                                           class="has-arrow waves-effect">
-                                            <i class="<?= $subacl->getIcon() ?>"></i>
-                                            <span><?= __($subacl->getSourceName()) ?></span>
-                                        </a>
-                                        <ul class="sub-acl" aria-expanded="false">
-                                            <?php
-                                            /**@var \Weline\Backend\Model\acl $level_3_acl */
-                                            foreach ($level_3_acls as $level_3_acl) {
-                                                if ($level_3_acl->getType() !== 'menus') {
-                                                    continue;
-                                                }
-                                                ?>
-                                                <li data-source='{{level_3_acl.source}}'>
-                                                    <a href="<?= $level_3_acl->getUrl() ?>"
-                                                       data-source='{{level_3_acl.source}}'><i
-                                                                class="<?= $level_3_acl->getIcon() ?>"></i>
-                                                        <?= __($level_3_acl->getSourceName()) ?>
-                                                    </a>
-                                                </li>
-                                                <?php
+                                ?>
+                                <!--<li data-source='{{subacl.source_id}}'>
+                                    <a href="javascript: void(0);" data-source='{{subacl.source_id}}'
+                                       class='waves-effect'>
+                                        <i class="<?php /*= $subacl->getIcon() */?>"></i><span
+                                            class='badge rounded-pill bg-primary float-end'>3</span>
+                                        <span><?php /*= __($subacl->getSourceName()) */?></span>
+                                    </a>
+                                </li>-->
+                                <li data-source='{{subacl.source_id}}'>
+                                    <a href='javascript: void(0);' data-source='{{subacl.source_id}}'
+                                       class='has-arrow waves-effect'>
+                                        <i class="<?= $subacl->getIcon() ?>"></i>
+                                        <span class='badge rounded-pill bg-primary float-end'><?=count($subacl->getSub())?></span>
+                                        <span><?= __($subacl->getSourceName()) ?></span>
+                                    </a>
+                                    <ul class="sub-acl" aria-expanded="false">
+                                        <?php
+                                        /**@var \Weline\Backend\Model\acl $level_3_acl */
+                                        foreach ($level_3_acls as $level_3_acl) {
+                                            if ($level_3_acl->getType() !== 'menus') {
+                                                continue;
                                             }
                                             ?>
-                                        </ul>
-                                    </li>
-                                    <?php
-                                }
+                                            <li data-source='{{level_3_acl.source_id}}'>
+                                                <a href="<?= $level_3_acl->getUrl() ?>"
+                                                   data-source='{{level_3_acl.source_id}}'><i
+                                                        class="<?= $level_3_acl->getIcon() ?>"></i>
+                                                    <?= __($level_3_acl->getSourceName()) ?>
+                                                </a>
+                                            </li>
+                                            <?php
+                                        }
+                                        ?>
+                                    </ul>
+                                </li>
+                                <?php
                             }
                         }
                     }
@@ -122,4 +103,5 @@ if (!$themeConfig->getThemeConfig('topnav')):
             <!-- Sidebar -->
         </div>
     </div>
-<?php endif; ?>
+<?php
+endif; ?>
