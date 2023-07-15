@@ -5,7 +5,7 @@
     <!--系统-->
     <!--系统-面板-->
     <add source="Weline_Admin::system_dashboard" name="system_dashboard" title="面板" action="admin"
-         parent="Weline_Backend::system_menu" icon="mdi mdi-desktop-mac-dashboard" order="1"/>
+         parent="Weline_Backend::dashboard" icon="mdi mdi-desktop-mac-dashboard" order="1"/>
     <!--系统-用户-->
     <add source="Weline_Admin::system_user" name="system_user" title="管理员" action="admin/backend/user/listing"
          parent="Weline_Backend::system_menu" icon="fas fa-user-shield" order="2"/>
@@ -29,9 +29,4 @@
     <!--路由管理-->
     <add source="Weline_Admin::system_modules_router" name="system_modules_router" title="路由管理" action="admin/system/modules/router"
          parent="Weline_Backend::system_configuration" icon="mdi mdi-router" order="10500"/>
-    <!--开发工具-->
-    <add source="Weline_Admin::origin_template" name="origin-template" title="后端模板库" action="admin/template"
-         parent="Weline_Backend::system_dev_configuration" icon="mdi mdi-view-module" order="20002"/>
-    <add source="Weline_Admin::template_upzet" name="template_upzet" title="Upzet" action="admin/template/upzet"
-         parent="Weline_Admin::origin_template" icon="mdi mdi-file-document-multiple" order="200021"/>
 </menus>
