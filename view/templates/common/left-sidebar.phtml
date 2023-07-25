@@ -31,7 +31,7 @@ if (!$themeConfig->getThemeConfig('topnav')):
                     $roleAccessMenus = $menuModel->getMenuTreeByRole($role);
                     /**@var \Weline\Acl\Model\Acl $menu */
                     foreach ($roleAccessMenus as $menu) {
-                        if (!$menu->getData('menu_is_enable')) {
+                        if (!$menu->getData('is_enable')) {
                             continue;
                         }
                         ?>
