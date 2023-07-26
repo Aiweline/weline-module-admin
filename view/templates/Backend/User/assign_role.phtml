@@ -140,7 +140,7 @@ $themeConfig = \Weline\Framework\Manager\ObjectManager::getInstance(\Weline\Back
                                             </thead>
                                             <tbody>
                                             <foreach name='users' item='user' key='key'>
-                                                <form action="@backend-url('*/backend/user/assignRole')" method="post">
+                                                <form action="@backend-url('*/backend/user/assign-role')" method="post">
                                                     <tr>
                                                         <td class='co-name'>{{user.user_id}}</td>
                                                         <td class='co-name'>{{user.username}}</td>
