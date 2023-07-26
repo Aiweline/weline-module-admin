@@ -133,6 +133,6 @@ class User extends \Weline\Framework\App\Controller\BackendController
             $this->getMessageManager()->addWarning(__('角色分配失败！'));
             if(DEV)$this->getMessageManager()->addException($exception);
         }
-        $this->redirect('*/backend/user/assignRole');
+        $this->redirect('*/backend/user/assign-role');
     }
 }
