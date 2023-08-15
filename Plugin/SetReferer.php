@@ -37,7 +37,19 @@ class SetReferer
     {
         if ($this->is_admin) {
             // 绕过ajax请求
-            if($this->request->getServer('HTTP_X_REQUESTED_WITH') == 'xmlhttprequest'){
+            if ($this->request->getServer('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest') {
+                return $result;
+            }
+            // 绕过iframe请求
+            if ($this->request->getServer('HTTP_SEC_FETCH_DEST') == 'iframe') {
+                return $result;
+            }
+            // 绕过iframe请求
+            if ($this->request->getServer('Sec-Fetch-Dest') == 'iframe') {
+                return $result;
+            }
+            // 绕过isIframe标识参数和isAjax标识参数
+            if ($this->request->getParam('isIframe') || $this->request->getParam('isAjax')) {
                 return $result;
             }
             $white_urls   = BackendWhitelistUrl::white_urls;
