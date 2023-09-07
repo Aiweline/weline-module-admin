@@ -30,7 +30,27 @@ class ResponseRedirectBefore implements ObserverInterface
         $url = $data->getUrl();
         $code = $data->getCode();
         $path = $this->request->getRouteUrlPath($url);
-        if ($this->request->isBackend() and ($code == 302) and $this->request->isGet() and ($path === 'admin/login')) {
+        if(!$this->request->isBackend()){
+            return ;
+        }
+        if(!$this->request->isGet()){
+            return ;
+        }
+        if(($path !== 'admin/login')){
+            return ;
+        }
+        if(($code !== 302)){
+            return ;
+        }
+        if($this->request->isAjax()||$this->request->isIframe()){
+            return ;
+        }
+        $white_urls   = BackendWhitelistUrl::white_urls;
+        $white_urls[] = ['path'=>'admin/login/logout'];
+        foreach ($white_urls as &$white_url) {
+            $white_url = $white_url['path'];
+        }
+        if (!in_array(trim($this->request->getRouteUrlPath(),'/'), $white_urls)) {
             ObjectManager::getInstance(Session::class)->setData('backend_login_referer', $this->request->getUrlBuilder()->getCurrentUrl());
         }
     }
