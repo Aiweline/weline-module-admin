@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /*
@@ -25,30 +26,34 @@ class SetReferer
     private Session $session;
     private Url $_url;
 
-    function __construct(Request $request, Session $session, Url $url)
+    public function __construct(Request $request, Session $session, Url $url)
     {
-        $this->request  = $request;
-        $this->session  = $session;
-        $this->_url     = $url;
+        $this->request = $request;
+        $this->session = $session;
+        $this->_url = $url;
         $this->is_admin = $request->isBackend();
     }
 
-    function afterStart(Core $route, $result)
+    public function beforeStart(Core $route)
     {
-        if ($this->is_admin) {
-            // 绕过ajax请求
-            if($this->request->getServer('HTTP_X_REQUESTED_WITH') == 'xmlhttprequest'){
-                return $result;
-            }
-            $white_urls   = BackendWhitelistUrl::white_urls;
-            $white_urls[] = ['path'=>'admin/login/logout'];
-            foreach ($white_urls as &$white_url) {
-                $white_url = $white_url['path'];
-            }
-            if (!in_array(trim($this->request->getRouteUrlPath(),'/'), $white_urls)) {
-                $this->session->setData('referer', $this->_url->getCurrentUrl());
-            }
+        if (!$this->is_admin) {
+            return;
         }
-        return $result;
+        // 绕过ajax请求
+        if ($this->request->isAjax()) {
+            return;
+        }
+        // 绕过ajax请求
+        if ($this->request->isIframe()) {
+            return;
+        }
+        $white_urls = BackendWhitelistUrl::white_urls;
+        $white_urls[] = ['path' => 'admin/login/logout'];
+        foreach ($white_urls as &$white_url) {
+            $white_url = $white_url['path'];
+        }
+        if (!in_array(trim($this->request->getRouteUrlPath(), '/'), $white_urls)) {
+            $this->session->setData('referer', $this->_url->getCurrentUrl());
+        }
     }
 }
