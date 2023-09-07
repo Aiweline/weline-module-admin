@@ -138,6 +138,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         $referer = $this->session->getData('referer');
         if ($referer) {
             if ($this->request->getUrlPath($referer) !== $this->request->getUrlPath()) {
+                $this->session->delete('referer');
                 $this->redirect($referer);
             }
         }
