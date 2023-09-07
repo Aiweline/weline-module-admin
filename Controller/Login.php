@@ -88,8 +88,8 @@ class Login extends \Weline\Framework\App\Controller\BackendController
             $adminUsernameUser->addAttemptTimes()->save();
         } catch (\Exception $exception) {
             $adminUsernameUser->setSessionId($this->session->getSessionId())
-                              ->setAttemptIp($this->request->clientIP())
-                              ->save();
+                ->setAttemptIp($this->request->clientIP())
+                ->save();
             $this->messageManager->addError(__('登录异常！'));
             $this->redirect($this->_url->getBackendUrl('/admin/login'));
         }
@@ -101,8 +101,8 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         if ($adminUsernameUser->getAttemptTimes() > 3 && ($this->session->getData('backend_verification_code') !== $this->request->getParam('code'))) {
             $this->messageManager->addError(__('验证码错误！'));
             $adminUsernameUser->setSessionId($this->session->getSessionId())
-                              ->setAttemptIp($this->request->clientIP())
-                              ->save();
+                ->setAttemptIp($this->request->clientIP())
+                ->save();
             $this->redirect($this->_url->getBackendUrl('/admin/login'));
         }
         # 尝试登录
@@ -111,13 +111,13 @@ class Login extends \Weline\Framework\App\Controller\BackendController
             # SESSION登录用户
             $this->session->login($adminUsernameUser, (int)$adminUsernameUser->getId());
             $adminUsernameUser->setSessionId($this->session->getSessionId())
-                              ->setLoginIp($this->request->clientIP());
+                ->setLoginIp($this->request->clientIP());
             # 重置 尝试登录次数
             $adminUsernameUser->resetAttemptTimes()->save();
         } else {
             $adminUsernameUser->setSessionId($this->session->getSessionId())
-                              ->setAttemptIp($this->request->clientIP())
-                              ->save();
+                ->setAttemptIp($this->request->clientIP())
+                ->save();
             $this->messageManager->addError(__('登录凭据错误！'));
             $this->logout();
         }
@@ -129,7 +129,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     private function redirectReferer()
     {
-        $referer = $this->session->getData('referer') ?: $this->request->getServer('HTTP_REFERER');
+        $referer = $this->session->getData('backend_login_referer');
         if ($referer) {
             if ($this->request->getUrlPath($referer) !== $this->request->getUrlPath()) {
                 $this->redirect($referer);
