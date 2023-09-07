@@ -129,7 +129,13 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     private function redirectReferer()
     {
-        $referer = $this->session->getData('backend_login_referer');
+        $backend_login_referer = $this->session->getData('backend_login_referer');
+        if ($backend_login_referer) {
+            if ($this->request->getUrlPath($backend_login_referer) !== $this->request->getUrlPath()) {
+                $this->redirect($backend_login_referer);
+            }
+        }
+        $referer = $this->session->getData('referer');
         if ($referer) {
             if ($this->request->getUrlPath($referer) !== $this->request->getUrlPath()) {
                 $this->redirect($referer);
