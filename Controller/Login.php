@@ -12,9 +12,14 @@ declare(strict_types=1);
 namespace Weline\Admin\Controller;
 
 use Weline\Admin\Helper\Data;
+use Weline\Admin\Model\BackendUserData;
 use Weline\Backend\Model\BackendUser;
 use Weline\Backend\Session\BackendSession;
+use Weline\Framework\Http\Cookie;
 use Weline\Framework\Manager\MessageManager;
+use Weline\Framework\Manager\ObjectManager;
+use Weline\Framework\Security\Token;
+use Weline\Framework\System\Text;
 
 class Login extends \Weline\Framework\App\Controller\BackendController
 {
@@ -23,13 +28,12 @@ class Login extends \Weline\Framework\App\Controller\BackendController
     private MessageManager $messageManager;
 
     public function __construct(
-        BackendUser    $adminUser,
-        MessageManager $messageManager,
-        Data           $helper
-    )
-    {
-        $this->adminUser      = $adminUser;
-        $this->helper         = $helper;
+        BackendUser     $adminUser,
+        MessageManager  $messageManager,
+        Data            $helper
+    ) {
+        $this->adminUser = $adminUser;
+        $this->helper = $helper;
         $this->messageManager = $messageManager;
     }
 
@@ -40,7 +44,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
             $this->redirectReferer();
             $this->redirect($this->_url->getBackendUrl('admin'));
         }
-//        $this->session->delete('backend_disable_login');
+        //        $this->session->delete('backend_disable_login');
         $this->assign('post_url', $this->_url->getBackendUrl('admin/login/post'));
         # 检测验证码
         if ($this->session->getData('need_backend_verification_code')) {
@@ -114,6 +118,20 @@ class Login extends \Weline\Framework\App\Controller\BackendController
                 ->setLoginIp($this->request->clientIP());
             # 重置 尝试登录次数
             $adminUsernameUser->resetAttemptTimes()->save();
+            # 检测是否记住我
+            if ($this->request->getParam('remember')) {
+                /**@var BackendUserData $backendUserData*/
+                $backendUserData = ObjectManager::getInstance(BackendUserData::class);
+                $backendUserData->load($adminUsernameUser->getId());
+                $token = Text::random_string(32);
+                $token_expire_time = strtotime('+1 week');
+                $backendUserData
+                    ->setData($backendUserData::fields_ID, $adminUsernameUser->getId())
+                    ->setData($backendUserData::fields_token,$token)
+                    ->setData($backendUserData::fields_token_expire_time, $token_expire_time)
+                    ->save();
+                Cookie::set('w_urt', $token, $token_expire_time, ['path' => '/'.$this->request->getAreaRouter()]);
+            }
         } else {
             $adminUsernameUser->setSessionId($this->session->getSessionId())
                 ->setAttemptIp($this->request->clientIP())
@@ -146,6 +164,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     public function logout()
     {
+        $this->session->delete('remember_expire_time');
         $this->session->logout();
         $this->redirect($this->_url->getBackendUrl('admin/login'));
     }
