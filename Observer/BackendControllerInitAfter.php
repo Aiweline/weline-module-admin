@@ -10,6 +10,7 @@ use Weline\Framework\Event\ObserverInterface;
 use Weline\Framework\Http\Cookie;
 use Weline\Framework\Http\Request;
 use Weline\Framework\Http\Url;
+use Weline\Framework\Manager\MessageManager;
 use Weline\Framework\Manager\ObjectManager;
 
 class BackendControllerInitAfter implements ObserverInterface
@@ -39,9 +40,8 @@ class BackendControllerInitAfter implements ObserverInterface
             if ($backendUserData->getId() and $backendUserData->getData($backendUserData::fields_token_expire_time) < time()) {
                 $backendUserData->setData($backendUserData::fields_token, '')
                     ->setData($backendUserData::fields_token_expire_time, 0);
-                $this->messageManager->addWarning(__('记住登录已过期，请重新登录！'));
+                ObjectManager::getInstance(MessageManager::class)->addWarning(__('记住登录已过期，请重新登录！'));
             } elseif ($user_id = $backendUserData->getId()) {
-                $sess_id = $this->getSession()->getSessionId();
                 # SESSION登录用户
                 $adminUser = ObjectManager::getInstance(BackendUser::class)->load($user_id);
                 if ($adminUser->getId()) {
@@ -51,7 +51,7 @@ class BackendControllerInitAfter implements ObserverInterface
                     # 重置 尝试登录次数
                     $adminUser->resetAttemptTimes()->save();
                 } else {
-                    $this->messageManager->addWarning(__('用户不存在！'));
+                    ObjectManager::getInstance(MessageManager::class)->addWarning(__('用户不存在！'));
                 }
             }
         }
