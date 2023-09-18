@@ -47,10 +47,12 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
         $white_acl_sources = self::white_urls;
         $this->whiteAclSource->insert($white_acl_sources, 'path')->fetch();
         $data = $event->getData('data');
-        $white_urls = [];
-        foreach (self::white_urls as $item) {
-            $white_urls[] = $this->url->getBackendUrl($item['path']);
+        if ($data) {
+            $white_urls = [];
+            foreach (self::white_urls as $item) {
+                $white_urls[] = $this->url->getBackendUrl($item['path']);
+            }
+            $data->setData('whitelist_url', $white_urls);
         }
-        $data->setData('whitelist_url', $white_urls);
     }
 }
