@@ -18,12 +18,12 @@ use Weline\Framework\Http\Url;
 
 class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
 {
-    const white_urls = [
-        ['path'=>'admin/login/post'],
-        ['path'=>'admin/login/verificationCode'],
-        ['path'=>'admin/login/verificationcode'],
-        ['path'=>'admin/login/index'],
-        ['path'=>'admin/login'],
+    public const white_urls = [
+        ['path' => 'admin/login/post'],
+        ['path' => 'admin/login/verificationCode'],
+        ['path' => 'admin/login/verificationcode'],
+        ['path' => 'admin/login/index'],
+        ['path' => 'admin/login'],
     ];
     private Url $url;
     /**
@@ -32,10 +32,9 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
     private WhiteAclSource $whiteAclSource;
 
     public function __construct(
-        Url $url,
+        Url            $url,
         WhiteAclSource $whiteAclSource
-    )
-    {
+    ) {
         $this->url = $url;
         $this->whiteAclSource = $whiteAclSource;
     }
@@ -46,6 +45,12 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
     public function execute(Event $event)
     {
         $white_acl_sources = self::white_urls;
-        $this->whiteAclSource->insert($white_acl_sources,'path')->fetch();
+        $this->whiteAclSource->insert($white_acl_sources, 'path')->fetch();
+        $data = $event->getData('data');
+        $white_urls = [];
+        foreach (self::white_urls as $item) {
+            $white_urls[] = $this->url->getBackendUrl($item['path']);
+        }
+        $data->setData('whitelist_url', $white_urls);
     }
 }

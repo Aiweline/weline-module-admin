@@ -14,11 +14,9 @@ namespace Weline\Admin\Controller;
 use Weline\Admin\Helper\Data;
 use Weline\Admin\Model\BackendUserData;
 use Weline\Backend\Model\BackendUser;
-use Weline\Backend\Session\BackendSession;
 use Weline\Framework\Http\Cookie;
 use Weline\Framework\Manager\MessageManager;
 use Weline\Framework\Manager\ObjectManager;
-use Weline\Framework\Security\Token;
 use Weline\Framework\System\Text;
 
 class Login extends \Weline\Framework\App\Controller\BackendController
@@ -57,7 +55,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         return $this->fetch();
     }
 
-    public function postPost()
+    public function postPost(): void
     {
         # 已经登录直接进入后台
         if ($this->session->isLogin()) {
@@ -162,9 +160,8 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         }
     }
 
-    public function logout()
+    public function logout(): void
     {
-        $this->session->delete('remember_expire_time');
         $this->session->logout();
         $this->redirect($this->_url->getBackendUrl('admin/login'));
     }
