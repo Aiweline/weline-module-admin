@@ -162,6 +162,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     public function logout(): void
     {
+        Cookie::set('w_urt', '', -1, ['path' => '/'.$this->request->getAreaRouter()]);
         $this->session->logout();
         $this->redirect($this->_url->getBackendUrl('admin/login'));
     }
