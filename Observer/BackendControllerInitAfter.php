@@ -41,6 +41,7 @@ class BackendControllerInitAfter implements ObserverInterface
                 $backendUserData->setData($backendUserData::fields_token, '')
                     ->setData($backendUserData::fields_token_expire_time, 0);
                 ObjectManager::getInstance(MessageManager::class)->addWarning(__('记住登录已过期，请重新登录！'));
+                Cookie::set('w_urt', '', -1, ['path' => '/'.$this->request->getAreaRouter()]);
                 $this->getSession()->logout();
             } elseif ($user_id = $backendUserData->getId()) {
                 # SESSION登录用户
