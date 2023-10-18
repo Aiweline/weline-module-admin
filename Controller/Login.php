@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Weline\Admin\Controller;
 
 use Weline\Admin\Helper\Data;
-use Weline\Admin\Model\BackendUserData;
+use Weline\Admin\Model\BackendUserToken;
 use Weline\Backend\Model\BackendUser;
 use Weline\Framework\Http\Cookie;
 use Weline\Framework\Manager\MessageManager;
@@ -26,9 +26,9 @@ class Login extends \Weline\Framework\App\Controller\BackendController
     private MessageManager $messageManager;
 
     public function __construct(
-        BackendUser     $adminUser,
-        MessageManager  $messageManager,
-        Data            $helper
+        BackendUser    $adminUser,
+        MessageManager $messageManager,
+        Data           $helper
     ) {
         $this->adminUser = $adminUser;
         $this->helper = $helper;
@@ -118,17 +118,18 @@ class Login extends \Weline\Framework\App\Controller\BackendController
             $adminUsernameUser->resetAttemptTimes()->save();
             # 检测是否记住我
             if ($this->request->getParam('remember')) {
-                /**@var BackendUserData $backendUserData*/
-                $backendUserData = ObjectManager::getInstance(BackendUserData::class);
-                $backendUserData->load($adminUsernameUser->getId());
+                /**@var BackendUserToken $backendUserToken */
+                $backendUserToken = ObjectManager::getInstance(BackendUserToken::class);
+                $backendUserToken->load($adminUsernameUser->getId());
                 $token = Text::random_string(32);
                 $token_expire_time = strtotime('+1 week');
-                $backendUserData
-                    ->setData($backendUserData::fields_ID, $adminUsernameUser->getId())
-                    ->setData($backendUserData::fields_token,$token)
-                    ->setData($backendUserData::fields_token_expire_time, $token_expire_time)
+                $backendUserToken
+                    ->setData($backendUserToken::fields_ID, $adminUsernameUser->getId())
+                    ->setData($backendUserToken::fields_type, 'admin_login_remember_me')
+                    ->setData($backendUserToken::fields_token, $token)
+                    ->setData($backendUserToken::fields_token_expire_time, $token_expire_time)
                     ->save();
-                Cookie::set('w_urt', $token, $token_expire_time, ['path' => '/'.$this->request->getAreaRouter()]);
+                Cookie::set('w_urt', $token, $token_expire_time, ['path' => '/' . $this->request->getAreaRouter()]);
             }
         } else {
             $adminUsernameUser->setSessionId($this->session->getSessionId())
@@ -162,7 +163,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     public function logout(): void
     {
-        Cookie::set('w_urt', '', -1, ['path' => '/'.$this->request->getAreaRouter()]);
+        Cookie::set('w_urt', '', -1, ['path' => '/' . $this->request->getAreaRouter()]);
         $this->session->logout();
         $this->redirect($this->_url->getBackendUrl('admin/login'));
     }

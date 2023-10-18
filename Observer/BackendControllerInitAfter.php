@@ -2,7 +2,7 @@
 
 namespace Weline\Admin\Observer;
 
-use Weline\Admin\Model\BackendUserData;
+use Weline\Admin\Model\BackendUserToken;
 use Weline\Backend\Model\BackendUser;
 use Weline\Backend\Session\BackendSession;
 use Weline\Framework\Event\Event;
@@ -33,17 +33,17 @@ class BackendControllerInitAfter implements ObserverInterface
     public function execute(Event $event)
     {
         # 检测记住我
-        if ($token = Cookie::get('w_urt')) {
-            /**@var BackendUserData $backendUserData */
-            $backendUserData = ObjectManager::getInstance(BackendUserData::class);
-            $backendUserData->load($backendUserData::fields_token, $token);
-            if ($backendUserData->getId() and $backendUserData->getData($backendUserData::fields_token_expire_time) < time()) {
-                $backendUserData->setData($backendUserData::fields_token, '')
-                    ->setData($backendUserData::fields_token_expire_time, 0);
+        if ($token = Cookie::get('w_urt') and (!$this->getSession()->getLoginUserID())) {
+            /**@var BackendUserToken $backendUserToken */
+            $backendUserToken = ObjectManager::getInstance(BackendUserToken::class);
+            $backendUserToken->where($backendUserToken::fields_token, $token)->where($backendUserToken::fields_type, 'admin_login_remember_me')->find()->fetch();
+            if ($backendUserToken->getId() and $backendUserToken->getData($backendUserToken::fields_token_expire_time) < time()) {
+                $backendUserToken->setData($backendUserToken::fields_token, '')
+                    ->setData($backendUserToken::fields_token_expire_time, 0);
                 ObjectManager::getInstance(MessageManager::class)->addWarning(__('记住登录已过期，请重新登录！'));
-                Cookie::set('w_urt', '', -1, ['path' => '/'.$this->request->getAreaRouter()]);
+                Cookie::set('w_urt', '', -1, ['path' => '/' . $this->request->getAreaRouter()]);
                 $this->getSession()->logout();
-            } elseif ($user_id = $backendUserData->getId()) {
+            } elseif ($user_id = $backendUserToken->getId()) {
                 # SESSION登录用户
                 $adminUser = ObjectManager::getInstance(BackendUser::class)->load($user_id);
                 if ($adminUser->getId()) {
@@ -75,7 +75,7 @@ class BackendControllerInitAfter implements ObserverInterface
             $white_url = $white_url['path'];
         }
         if (!in_array(trim($this->request->getRouteUrlPath(), '/'), $white_urls)) {
-            /**@var Url $urlBuilder*/
+            /**@var Url $urlBuilder */
             $urlBuilder = ObjectManager::getInstance(Url::class);
             $this->getSession()->setData('referer', $urlBuilder->getCurrentUrl());
         }
