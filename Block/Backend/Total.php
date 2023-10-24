@@ -71,7 +71,7 @@ class Total extends \Weline\Framework\View\Block
         $options_name = 'radialoptions' . $id;
         $chart_name   = 'radialchart' . $id;
         # 向footer中注入js脚本
-        $this->getFooter()->addHtml(
+        $this->getFooter()->addHtml('Weline_Admin::head',
             "<script>
 // 添加footer脚本
 let {$options_name} = {
