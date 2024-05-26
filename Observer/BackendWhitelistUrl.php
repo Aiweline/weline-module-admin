@@ -50,7 +50,7 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
         if ($data) {
             $white_urls = [];
             foreach (self::white_urls as $item) {
-                $white_urls[] = $this->url->getBackendUrl($item['path']);
+                $white_urls[] = $item['path'];
             }
             $data->setData('whitelist_url', $white_urls);
         }
