@@ -46,4 +46,38 @@ class Data extends \Weline\Framework\App\Helper
             return $this->adminUser;
         }
     }
+    /**
+     * @DESC          # 返回管理员
+     *
+     * @AUTH    秋枫雁飞
+     * @EMAIL aiweline@qq.com
+     * @DateTime: 2021/11/9 14:06
+     * 参数区：
+     * @return BackendUser
+     */
+    public function getSessionUser(string $sess_id): BackendUser
+    {
+        try {
+            return clone $this->adminUser->clear()->load($this->adminUser::fields_sess_id, $sess_id);
+        } catch (\Exception $exception) {
+            return $this->adminUser;
+        }
+    }
+    /**
+     * @DESC          # 返回管理员
+     *
+     * @AUTH    秋枫雁飞
+     * @EMAIL aiweline@qq.com
+     * @DateTime: 2021/11/9 14:06
+     * 参数区：
+     * @return BackendUser
+     */
+    public function getUser(int $user_id): BackendUser
+    {
+        try {
+            return clone $this->adminUser->clear()->load($user_id);
+        } catch (\Exception $exception) {
+            return $this->adminUser;
+        }
+    }
 }

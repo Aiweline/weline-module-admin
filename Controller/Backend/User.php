@@ -64,11 +64,11 @@ class User extends \Weline\Framework\App\Controller\BackendController
     {
         try {
             $this->backendUser->clearData()
-                              ->setId($this->request->getPost('user_id'))
-                              ->setUsername($this->request->getPost('username'))
-                              ->setEmail($this->request->getPost('email'))
-                              ->setPassword($this->request->getPost('password'))
-                              ->save(true);
+                ->setId($this->request->getPost('user_id'))
+                ->setUsername($this->request->getPost('username'))
+                ->setEmail($this->request->getPost('email'))
+                ->setPassword($this->request->getPost('password'))
+                ->save(true);
             $this->getMessageManager()->addSuccess(__('修改成功！'));
             $this->redirect('*/backend/user/edit', ['id' => $this->backendUser->getId()]);
         } catch (\Exception $exception) {
@@ -84,9 +84,9 @@ class User extends \Weline\Framework\App\Controller\BackendController
     {
         try {
             $this->backendUser->clearData()->setUsername($this->request->getPost('username'))
-                              ->setEmail($this->request->getPost('email'))
-                              ->setPassword(trim($this->request->getPost('password')))
-                              ->save(true);
+                ->setEmail($this->request->getPost('email'))
+                ->setPassword(trim($this->request->getPost('password')))
+                ->save(true);
             $this->getMessageManager()->addSuccess(__('添加成功！'));
             $this->redirect('*/backend/user/edit', ['id' => $this->backendUser->getId()]);
         } catch (\Exception $exception) {
@@ -94,6 +94,19 @@ class User extends \Weline\Framework\App\Controller\BackendController
             $this->getMessageManager()->addWarning(__('添加失败！'));
             if (DEV) $this->getMessageManager()->addException($exception);
             $this->redirect('*/backend/user/add');
+        }
+    }
+    #[\Weline\Framework\Acl\Acl('Weline_Admin::system_user_delete_post', '管理员删除请求','', '请求删除管理员')]
+    function postDelete()
+    {
+        try {
+            $this->backendUser->clearData()->load($this->request->getPost('id'))->delete();
+            $this->getMessageManager()->addSuccess(__('删除成功！'));
+            $this->redirect('*/backend/user/listing');
+        } catch (\Exception $exception) {
+            $this->getMessageManager()->addWarning(__('删除失败！'));
+            if (DEV) $this->getMessageManager()->addException($exception);
+            $this->redirect('*/backend/user/listing');
         }
     }
 
@@ -133,6 +146,6 @@ class User extends \Weline\Framework\App\Controller\BackendController
             $this->getMessageManager()->addWarning(__('角色分配失败！'));
             if(DEV)$this->getMessageManager()->addException($exception);
         }
-        $this->redirect('*/backend/user/assignRole');
+        $this->redirect('*/backend/user/assign-role');
     }
 }

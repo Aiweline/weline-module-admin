@@ -18,5 +18,6 @@ Register::register(
     [
         'Weline_SystemConfig',
         'Weline_Backend',
+        'Weline_Acl'
     ]
 );
