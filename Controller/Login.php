@@ -15,6 +15,7 @@ use Weline\Admin\Helper\Data;
 use Weline\Admin\Model\BackendUserToken;
 use Weline\Backend\Model\BackendUser;
 use Weline\Framework\Http\Cookie;
+use Weline\Framework\Http\Url;
 use Weline\Framework\Manager\MessageManager;
 use Weline\Framework\Manager\ObjectManager;
 use Weline\Framework\System\Text;
@@ -146,14 +147,14 @@ class Login extends \Weline\Framework\App\Controller\BackendController
 
     private function redirectReferer()
     {
-        $backend_login_referer = $this->session->getData('backend_login_referer');
+        $backend_login_referer = Url::removeExtraDoubleSlashes($this->session->getData('backend_login_referer'));
         if ($backend_login_referer) {
             if ($this->request->getUrlPath($backend_login_referer) !== $this->request->getUrlPath()) {
                 $this->session->delete('backend_login_referer');
                 $this->redirect($backend_login_referer);
             }
         }
-        $referer = $this->session->getData('referer');
+        $referer = Url::removeExtraDoubleSlashes($this->session->getData('referer'));
         if ($referer) {
             if ($this->request->getUrlPath($referer) !== $this->request->getUrlPath()) {
                 $this->redirect($referer);
