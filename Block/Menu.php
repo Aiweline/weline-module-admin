@@ -11,15 +11,8 @@ declare(strict_types=1);
 
 namespace Weline\Admin\Block;
 
-use Weline\Backend\Model\BackendUser;
-use Weline\Backend\Model\Config;
-use Weline\Framework\App\Session\BackendSession;
 use Weline\Framework\View\Block;
 
 class Menu extends Block
 {
-    public function __toString()
-    {
-        parent::__toString();
-    }
 }
