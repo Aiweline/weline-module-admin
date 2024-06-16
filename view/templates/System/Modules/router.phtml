@@ -65,7 +65,8 @@ $themeConfig = \Weline\Framework\Manager\ObjectManager::getInstance(\Weline\Back
 
                             <div class="page-title-right">
                                 <ol class="breadcrumb m-0">
-                                    <li class="breadcrumb-item"><a href="javascript: void(0);"><?= __('系统') ?></a></li>
+                                    <li class="breadcrumb-item"><a href="javascript: void(0);"><?= __('系统') ?></a>
+                                    </li>
                                     <li class="breadcrumb-item active"><?= __('菜单管理') ?></li>
                                 </ol>
                             </div>
@@ -103,7 +104,8 @@ $themeConfig = \Weline\Framework\Manager\ObjectManager::getInstance(\Weline\Back
                                         foreach ($this->getData('routers') as $module => $router) {
                                             ?>
                                             <tr data-id='@var{$module}' class="success">
-                                                <td colspan="3" style="font-weight: 700;font-size: 18px">@var{$module}</td>
+                                                <td colspan="3" style="font-weight: 700;font-size: 18px">@var{$module}
+                                                </td>
                                             </tr>
                                             <?php foreach ($router as $path => $value): ?>
                                                 <tr data-id='@var{$module}'>
@@ -134,11 +136,13 @@ $themeConfig = \Weline\Framework\Manager\ObjectManager::getInstance(\Weline\Back
                                                         ?>
                                                     </td>
                                                     <td style='width: 100px'>
-                                                        <a class='btn btn-primary btn-lg'
-                                                           href="<?= $this->getBackendUrl('backend/system/config/set?key=' . \Weline\Backend\Config\KeysInterface::key_start_page_path . '&value=' . $path) ?>"
-                                                           title='<?= __('设为开始页面') ?>'>
-                                                            <?= __('设为开始页面') ?>
-                                                        </a>
+                                                        <notempty name="value.start_page_path">
+                                                            <a class='btn btn-primary btn-lg'
+                                                               href="<?= $this->getBackendUrl('backend/system/config/set?key=' . \Weline\Backend\Config\KeysInterface::key_start_page_path . '&value=' . $value['start_page_path']) ?>"
+                                                               title='<?= __('设为开始页面') ?>'>
+                                                                <?= __('设为开始页面') ?>
+                                                            </a>
+                                                        </notempty>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>

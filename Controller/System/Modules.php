@@ -33,6 +33,11 @@ class Modules extends BaseController
         }
         $modules_routers = [];
         foreach ($routers as $path => $router) {
+            if (str_contains($path, '::GET') or !str_contains($path, '::')) {
+                $router['start_page_path'] = str_replace('::GET', '', $path);
+            }else{
+                $router['start_page_path'] = '';
+            }
             $modules_routers[$router['module']][$path] = $router;
         }
         $this->assign('routers', $modules_routers);
