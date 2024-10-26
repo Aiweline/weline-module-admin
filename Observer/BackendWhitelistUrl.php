@@ -20,7 +20,7 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
 {
     public const white_urls = [
         ['path' => 'admin/login/post'],
-        ['path' => 'admin/login/verificationCode'],
+        ['path' => 'admin/login/verification-code'],
         ['path' => 'admin/login/verificationcode'],
         ['path' => 'admin/login/index'],
         ['path' => 'admin/login'],
