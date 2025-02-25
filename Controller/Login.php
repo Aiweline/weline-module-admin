@@ -30,7 +30,8 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         BackendUser    $adminUser,
         MessageManager $messageManager,
         Data           $helper
-    ) {
+    )
+    {
         $this->adminUser = $adminUser;
         $this->helper = $helper;
         $this->messageManager = $messageManager;
@@ -71,8 +72,12 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         }
 
         $adminUsernameUser = $this->helper->getRequestBackendUser();
-        if (!$adminUsernameUser->getId()) {
+        if (!$adminUsernameUser->getId() or $adminUsernameUser->getIsDeleted()) {
             $this->messageManager->addError(__('账户不存在！'));
+            $this->redirect($this->_url->getBackendUrl('/admin/login'));
+        }
+        if (!$adminUsernameUser->getIsEnabled()) {
+            $this->messageManager->addError(__('账户被禁用！'));
             $this->redirect($this->_url->getBackendUrl('/admin/login'));
         }
         if ($adminUsernameUser->getAttemptTimes() > 6) {
@@ -156,7 +161,7 @@ class Login extends \Weline\Framework\App\Controller\BackendController
         }
         $referer = Url::removeExtraDoubleSlashes($this->session->getData('referer'));
         if ($referer) {
-            if ($this->request->getUrlPath($referer) !== $this->request->getUrlPath()) {
+            if ($referer !== $this->request->getUrlPath()) {
                 $this->redirect($referer);
             }
         }

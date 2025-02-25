@@ -9,9 +9,7 @@ $themeConfig = ObjectManager::getInstance('\Weline\Backend\Block\ThemeConfig');
 if (!$themeConfig->getThemeConfig('topnav')):
     ?>
     <div class="vertical-menu">
-
         <div data-simplebar class="h-100">
-
             <!--- Sidemenu -->
             <div id="sidebar-menu">
                 <!-- Left Menu Start -->
@@ -29,163 +27,68 @@ if (!$themeConfig->getThemeConfig('topnav')):
                     /**@var \Weline\Acl\Model\RoleAccess $roleAccessModel */
                     $roleAccessModel = ObjectManager::getInstance(\Weline\Acl\Model\RoleAccess::class);
                     $roleAccessMenus = $menuModel->getMenuTreeByRole($role);
-                    /**@var \Weline\Acl\Model\Acl $menu */
-                    foreach ($roleAccessMenus as $menu) {
-                        if (!$menu->getData('is_enable')) {
-                            continue;
-                        }
-                        ?>
-                        <li class='menu-title' data-source='{{menu.source_id}}'><i
-                                class="<?= $menu->getIcon() ?>"></i><span><?= __($menu->getSourceName()) ?></span>
-                        </li>
-                        <?php
-                        $subacls = $menu->getSub();
-                        /**@var \Weline\Acl\Model\Acl $subacl */
-                        foreach ($subacls as $subacl) {
-                            if ($subacl->getType() !== 'menus') {
+
+                    /**@var \Weline\Framework\Http\Request $req */
+                    $req = ObjectManager::getInstance(\Weline\Framework\Http\Request::class);
+                    $frontend_url_prefix = '/';
+                    $backend_url_prefix = $req->getUrlBuilder()->getBackendUrl('/');
+                    function renderMenu($menus, $backend_url_prefix, $frontend_url_prefix)
+                    {
+                        foreach ($menus as $menu) {
+                            if (!isset($menu['is_enable']) or !$menu['is_enable']) {
                                 continue;
                             }
-                            $level_3_acls       = $subacl->getSub();
-                            $level_3_acls_count = 0;
-                            foreach ($level_3_acls as $level3AclKey => $level3Acl) {
-                                if ($level3Acl->getType() === 'menus') {
-                                    $level_3_acls_count += 1;
-                                }else{
-                                    unset($level_3_acls[$level3AclKey]);
-                                }
-                            }
-                            if ($level_3_acls_count == 0) {
-                                ?>
-                                <li data-source='{{subacl.source_id}}'>
-                                    <a href="<?= $subacl->getUrl() ?>" data-source='{{subacl.source_id}}'
-                                       class=' waves-effect'>
-                                        <i class="<?= $subacl->getIcon() ?>"></i>
-                                        <span><?= __($subacl->getSourceName()) ?></span>
-                                    </a>
-                                </li>
-                                <?php
-                            } else {
-                                ?>
-                                <li data-source='{{subacl.source_id}}'>
-                                    <a href='javascript: void(0);' data-source='{{subacl.source_id}}'
-                                       class='has-arrow waves-effect'>
-                                        <i class="<?= $subacl->getIcon() ?>"></i>
-                                        <span
-                                            class='badge rounded-pill bg-primary float-end'><?= $level_3_acls_count ?></span>
-                                        <span><?= __($subacl->getSourceName()) ?></span>
-                                    </a>
-                                    <ul class="sub-acl" aria-expanded="false">
-                                        <?php
-                                        /**@var \Weline\Backend\Model\acl $level_3_acl */
-                                        foreach ($level_3_acls as $level_3_acl) {
-                                            if ($level_3_acl->getType() !== 'menus') {
-                                                continue;
-                                            }
-                                            $level_4_acls = $level_3_acl->getSub();
-                                            $level_4_acls_count = 0;
-                                            foreach ($level_4_acls as $level4AclKey => $level4Acl) {
-                                                if ($level4Acl->getType() === 'menus') {
-                                                    $level_4_acls_count += 1;
-                                                } else {
-                                                    unset($level_4_acls[$level4AclKey]);
-                                                }
-                                            }
-                                            if ($level_4_acls_count==0) {
-                                                ?>
-                                                <li data-source='{{level_3_acl.source_id}}'>
-                                                    <a href="<?= $level_3_acl->getUrl() ?>"
-                                                       data-source='{{level_3_acl.source_id}}'><i
-                                                            class="<?= $level_3_acl->getIcon() ?>"></i>
-                                                        <?= __($level_3_acl->getSourceName()) ?>
-                                                    </a>
-                                                </li>
-                                                <?php
-                                            } else {
-                                                ?>
-                                                <li data-source='{{level_3_acl.source_id}}'>
-                                                    <a href='javascript: void(0);'
-                                                       data-source='{{level_3_acl.source_id}}'
-                                                       class='has-arrow waves-effect'>
-                                                        <i class="<?= $subacl->getIcon() ?>"></i>
-                                                        <span
-                                                            class='badge rounded-pill bg-primary float-end'><?= count($level_3_acl->getSub()) ?></span>
-                                                        <span><?= __($level_3_acl->getSourceName()) ?></span>
-                                                    </a>
-                                                    <ul class='sub-acl' aria-expanded='false'>
-                                                        <?php
-                                                        /**@var \Weline\Backend\Model\acl $level_4_acl */
-                                                        foreach ($level_4_acls
+                            echo "<li class='menu-title' data-source='{$menu['source_id']}'>";
+                            echo "<i class='{$menu['icon']}'></i><span>" . __($menu['source_name']) . "</span>";
+                            echo "</li>";
 
-                                                        as $level_4_acl) {
-                                                        if ($level_4_acl->getType() !== 'menus') {
-                                                            continue;
-                                                        }
-                                                        $level_5_acls       = $level_4_acl->getSub();
-                                                        $level_5_acls_count = 0;
-                                                        foreach ($level_5_acls as $level5AclKey => $level5Acl) {
-                                                            if ($level5Acl->getType() === 'menus') {
-                                                                $level_5_acls_count += 1;
-                                                            } else {
-                                                                unset($level_5_acls[$level5AclKey]);
-                                                            }
-                                                        }
-                                                        if ($level_5_acls_count == 0) {
-                                                            ?>
-                                                            <li data-source='{{level_4_acl.source_id}}'>
-                                                                <a href="<?= $level_4_acl->getUrl() ?>"
-                                                                   data-source='{{level_4_acl.source_id}}'><i
-                                                                        class="<?= $level_4_acl->getIcon() ?>"></i>
-                                                                    <?= __($level_4_acl->getSourceName()) ?>
-                                                                </a>
-                                                            </li>
-                                                            <?php
-                                                        }else{
-                                                        ?>
-                                                        <li data-source='{{level_3_acl.source_id}}'>
-                                                            <a href='javascript: void(0);'
-                                                               data-source='{{level_3_acl.source_id}}'
-                                                               class='has-arrow waves-effect'>
-                                                                <i class="<?= $subacl->getIcon() ?>"></i>
-                                                                <span
-                                                                    class='badge rounded-pill bg-primary float-end'><?= $level_5_acls_count ?></span>
-                                                                <span><?= __($level_3_acl->getSourceName()) ?></span>
-                                                            </a>
-                                                            <ul class='sub-acl' aria-expanded='false'>
-                                                                <?php
-                                                                foreach ($level_5_acls as $level_5_acl) {
-                                                                    if ($level_5_acl->getType() !== 'menus') {
-                                                                        continue;
-                                                                    }
-                                                                    ?>
-                                                                    <li data-source='{{level_5_acl.source_id}}'>
-                                                                        <a href="<?= $level_5_acl->getUrl() ?>"
-                                                                           data-source='{{level_5_acl.source_id}}'><i
-                                                                                class="<?= $level_5_acl->getIcon() ?>"></i>
-                                                                            <?= __($level_5_acl->getSourceName()) ?>
-                                                                        </a>
-                                                                    </li>
-                                                                    <?php
-                                                                }
-                                                                ?>
-                                                            </ul>
-                                                            <?php
-                                                            }
-                                                            }
-                                                            ?>
-                                                    </ul>
-                                                </li>
-                                                <?php
-                                            }
-                                            ?>
-                                            <?php
-                                        }
-                                        ?>
-                                    </ul>
-                                </li>
-                                <?php
+                            if (isset($menu['children'])) {
+                                echo "<ul class='sub-acl' aria-expanded='false'>";
+                                renderSubMenu($menu['children'], $backend_url_prefix, $frontend_url_prefix);
+                                echo "</ul>";
                             }
                         }
                     }
+
+                    function renderSubMenu(array $submenus, string $backend_url_prefix, string $frontend_url_prefix)
+                    {
+                        foreach ($submenus as $submenu) {
+                            if ($submenu['type'] !== 'menus') {
+                                continue;
+                            }
+
+                            $children = $submenu['children'] ?? [];
+                            $childCount = 0;
+                            foreach ($children as $child) {
+                                if ($child['type'] === 'menus') {
+                                    $childCount++;
+                                }
+                            }
+
+                            if ($childCount == 0) {
+                                $url_prefix = $submenu['is_backend'] ? $backend_url_prefix : $frontend_url_prefix;
+                                echo "<li data-source='{$submenu['source_id']}'>";
+                                echo "<a href='{$url_prefix}/{$submenu['route']}' data-source='{$submenu['source_id']}' class='waves-effect'>";
+                                echo "<i class='{$submenu['icon']}'></i><span>" . __($submenu['source_name']) . "</span>";
+                                echo "</a>";
+                                echo "</li>";
+                            } else {
+                                echo "<li data-source='{$submenu['source_id']}'>";
+                                echo "<a href='javascript: void(0);' data-source='{$submenu['source_id']}' class='has-arrow waves-effect'>";
+                                echo "<i class='{$submenu['icon']}'></i>";
+//                                echo "<span class='badge rounded-pill bg-primary float-end'>{$childCount}</span>";
+                                echo "<span>" . __($submenu['source_name']) . "</span>";
+                                echo "</a>";
+                                echo "<ul class='sub-acl' aria-expanded='false'>";
+                                renderSubMenu($children, $backend_url_prefix,$frontend_url_prefix);
+                                echo "</ul>";
+                                echo "</li>";
+                            }
+                        }
+                    }
+
+                    // 调用函数生成菜单
+                    renderMenu($roleAccessMenus, $backend_url_prefix, $frontend_url_prefix);
                     ?>
                 </ul>
             </div>

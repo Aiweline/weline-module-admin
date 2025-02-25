@@ -19,7 +19,6 @@
     <!--内容管理-->
     <add source="Weline_Admin::system_cms" name="system_cms" title="内容管理" action="admin/system/cms"
          parent="Weline_Backend::system_menu" icon="ri-edit-box-line" order="200"/>
-
     <!--事件管理-->
     <add source="Weline_Admin::system_events" name="system_events" title="事件管理" action="admin/system/events"
          parent="Weline_Backend::system_configuration" icon="ri-spy-fill" order="10100"/>
