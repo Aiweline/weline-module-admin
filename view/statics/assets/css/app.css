@@ -12,7 +12,8 @@ File: Main Css File
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1002;
+    /* 高于 .rightbar-overlay(10040)，避免遮罩拦截顶栏点击；低于 .right-bar(10060) 保证设置抽屉仍在最前 */
+    z-index: 10050;
     background-color: #ffffff;
     -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
@@ -77,10 +78,12 @@ File: Main Css File
     position: absolute;
     z-index: 10;
     font-size: 16px;
-    line-height: 38px;
+    line-height: 1;
     right: 13px;
-    top: 0;
+    top: 50%;
+    transform: translateY(-50%);
     color: #74788d;
+    pointer-events: none;
 }
 
 .megamenu-list li {
@@ -334,7 +337,7 @@ body[data-layout="horizontal"] .footer {
     -webkit-transition: all 200ms ease-out;
     transition: all 200ms ease-out;
     width: 280px;
-    z-index: 9999;
+    z-index: 10060;
     float: left !important;
     left: -290px;
     top: 0;
@@ -363,7 +366,7 @@ body[data-layout="horizontal"] .footer {
     top: 0;
     bottom: 0;
     display: none;
-    z-index: 9998;
+    z-index: 10040;
     -webkit-transition: all .2s ease-out;
     transition: all .2s ease-out;
 }
@@ -3660,4 +3663,277 @@ input[switch="dark"]:checked + label {
 
 .error-text {
     text-shadow: -4px 4px rgba(11, 177, 151, 0.4);
+}
+
+/*********************
+    表格滚动条主题兼容样式
+**********************/
+/* 表格响应式容器滚动条 - 亮色主题 */
+.table-responsive,
+.table-responsive .table,
+div.table-responsive > div.dataTables_wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.table-responsive::-webkit-scrollbar,
+.table-responsive .table::-webkit-scrollbar,
+div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track,
+.table-responsive .table::-webkit-scrollbar-track,
+div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb,
+.table-responsive .table::-webkit-scrollbar-thumb,
+div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover,
+.table-responsive .table::-webkit-scrollbar-thumb:hover,
+div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.7);
+}
+
+/* 表格响应式容器滚动条 - 暗色主题 */
+body[data-sidebar="dark"] .table-responsive::-webkit-scrollbar-thumb,
+body[data-topbar="dark"] .table-responsive::-webkit-scrollbar-thumb,
+body[data-sidebar="dark"] .table-responsive .table::-webkit-scrollbar-thumb,
+body[data-topbar="dark"] .table-responsive .table::-webkit-scrollbar-thumb,
+body[data-sidebar="dark"] div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar-thumb,
+body[data-topbar="dark"] div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.4);
+}
+
+body[data-sidebar="dark"] .table-responsive::-webkit-scrollbar-thumb:hover,
+body[data-topbar="dark"] .table-responsive::-webkit-scrollbar-thumb:hover,
+body[data-sidebar="dark"] .table-responsive .table::-webkit-scrollbar-thumb:hover,
+body[data-topbar="dark"] .table-responsive .table::-webkit-scrollbar-thumb:hover,
+body[data-sidebar="dark"] div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar-thumb:hover,
+body[data-topbar="dark"] div.table-responsive > div.dataTables_wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.6);
+}
+
+body[data-sidebar="dark"] .table-responsive,
+body[data-topbar="dark"] .table-responsive,
+body[data-sidebar="dark"] .table-responsive .table,
+body[data-topbar="dark"] .table-responsive .table,
+body[data-sidebar="dark"] div.table-responsive > div.dataTables_wrapper,
+body[data-topbar="dark"] div.table-responsive > div.dataTables_wrapper {
+    scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+/* DataTable 表格滚动条 */
+.w-datatable,
+.datatable-content,
+.datatable-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.w-datatable::-webkit-scrollbar,
+.datatable-content::-webkit-scrollbar,
+.datatable-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.w-datatable::-webkit-scrollbar-track,
+.datatable-content::-webkit-scrollbar-track,
+.datatable-container::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.w-datatable::-webkit-scrollbar-thumb,
+.datatable-content::-webkit-scrollbar-thumb,
+.datatable-container::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.w-datatable::-webkit-scrollbar-thumb:hover,
+.datatable-content::-webkit-scrollbar-thumb:hover,
+.datatable-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.7);
+}
+
+/* DataTable 表格滚动条 - 暗色主题 */
+body[data-sidebar="dark"] .w-datatable::-webkit-scrollbar-thumb,
+body[data-topbar="dark"] .w-datatable::-webkit-scrollbar-thumb,
+body[data-sidebar="dark"] .datatable-content::-webkit-scrollbar-thumb,
+body[data-topbar="dark"] .datatable-content::-webkit-scrollbar-thumb,
+body[data-sidebar="dark"] .datatable-container::-webkit-scrollbar-thumb,
+body[data-topbar="dark"] .datatable-container::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.4);
+}
+
+body[data-sidebar="dark"] .w-datatable::-webkit-scrollbar-thumb:hover,
+body[data-topbar="dark"] .w-datatable::-webkit-scrollbar-thumb:hover,
+body[data-sidebar="dark"] .datatable-content::-webkit-scrollbar-thumb:hover,
+body[data-topbar="dark"] .datatable-content::-webkit-scrollbar-thumb:hover,
+body[data-sidebar="dark"] .datatable-container::-webkit-scrollbar-thumb:hover,
+body[data-topbar="dark"] .datatable-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.6);
+}
+
+body[data-sidebar="dark"] .w-datatable,
+body[data-topbar="dark"] .w-datatable,
+body[data-sidebar="dark"] .datatable-content,
+body[data-topbar="dark"] .datatable-content,
+body[data-sidebar="dark"] .datatable-container,
+body[data-topbar="dark"] .datatable-container {
+    scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+/* Dashboard Tab 导航样式 - 美化版 */
+.dashboard-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border-bottom: 1px solid var(--backend-color-border, #e9ecef);
+    padding: 0;
+    margin: 0 0 24px 0;
+    list-style: none;
+    background: transparent;
+    position: relative;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.dashboard-tab {
+    border: none;
+    border-radius: 6px 6px 0 0;
+    padding: 14px 28px;
+    margin: 0 4px 0 0;
+    background: transparent;
+    color: var(--backend-color-text-secondary, #6c757d);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-tab::before {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--backend-color-primary, #556ee6);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px 2px 0 0;
+}
+
+.dashboard-tab::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--backend-color-primary-bg-subtle, rgba(85, 110, 230, 0.08));
+    opacity: 0;
+    border-radius: 6px 6px 0 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.dashboard-tab:hover {
+    color: var(--backend-color-primary, #556ee6);
+    background-color: transparent;
+}
+
+.dashboard-tab:hover::before {
+    transform: scaleX(0.6);
+}
+
+.dashboard-tab:hover::after {
+    opacity: 1;
+}
+
+.dashboard-tab.active,
+.dashboard-tab[aria-selected="true"] {
+    color: var(--backend-color-primary, #556ee6);
+    font-weight: 600;
+    background-color: transparent;
+    border-bottom-color: transparent;
+}
+
+.dashboard-tab.active::before,
+.dashboard-tab[aria-selected="true"]::before {
+    transform: scaleX(1);
+}
+
+.dashboard-tab.active::after,
+.dashboard-tab[aria-selected="true"]::after {
+    opacity: 1;
+}
+
+.dashboard-tab:focus {
+    outline: 2px solid var(--backend-color-primary, #556ee6);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.dashboard-tab:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* 暗色主题支持 */
+[data-theme="dark"] .dashboard-tabs,
+body[data-sidebar="dark"] .dashboard-tabs,
+body[data-topbar="dark"] .dashboard-tabs {
+    border-bottom-color: var(--backend-color-border, #3a3f51);
+}
+
+[data-theme="dark"] .dashboard-tab,
+body[data-sidebar="dark"] .dashboard-tab,
+body[data-topbar="dark"] .dashboard-tab {
+    color: var(--backend-color-text-secondary, #919bae);
+}
+
+[data-theme="dark"] .dashboard-tab::after,
+body[data-sidebar="dark"] .dashboard-tab::after,
+body[data-topbar="dark"] .dashboard-tab::after {
+    background: var(--backend-color-primary-bg-subtle, rgba(85, 110, 230, 0.15));
+}
+
+[data-theme="dark"] .dashboard-tab:hover,
+body[data-sidebar="dark"] .dashboard-tab:hover,
+body[data-topbar="dark"] .dashboard-tab:hover {
+    color: var(--backend-color-primary, #556ee6);
+}
+
+[data-theme="dark"] .dashboard-tab.active,
+body[data-sidebar="dark"] .dashboard-tab.active,
+body[data-topbar="dark"] .dashboard-tab.active,
+[data-theme="dark"] .dashboard-tab[aria-selected="true"],
+body[data-sidebar="dark"] .dashboard-tab[aria-selected="true"],
+body[data-topbar="dark"] .dashboard-tab[aria-selected="true"] {
+    color: var(--backend-color-primary, #556ee6);
+    border-bottom-color: transparent;
 }

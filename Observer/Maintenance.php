@@ -11,25 +11,40 @@ declare(strict_types=1);
 
 namespace Weline\Admin\Observer;
 
-use Weline\Framework\DataObject\DataObject;
 use Weline\Framework\Event\Event;
 use Weline\Framework\Http\Request;
-use Weline\Framework\Manager\ObjectManager;
 use Weline\Framework\View\Block;
-
+use Weline\Maintenance\Helper\UrlParser;
 class Maintenance implements \Weline\Framework\Event\ObserverInterface
 {
     /**
      * @inheritDoc
      */
-    public function execute(Event $event)
+    public function execute(Event &$event): void
     {
-        /**@var Request $req */
-        $req   = ObjectManager::getInstance(Request::class);
+       
+        // 在 run_before 阶段，使用轻量级 URL 解析器判断请求类型（不触发事件，不查询数据库）
+        $parse = $event->getData('parse');
+        $uri = $parse['uri'];
+        $isApiRequest = UrlParser::isApiRequest(\w_env('origin_request_uri', ''));
+        $isBackend = UrlParser::isBackendRequest(\w_env('origin_request_uri', ''));
+        // 如果 area 不是 API，再检查 Accept 头（兼容某些特殊情况）
+        if (!$isApiRequest) {
+            $acceptHeader = \w_env('server.accept', '');
+            $isApiRequest = str_contains($acceptHeader, 'application/json');
+        }
+        // 仅处理后端非 API 请求
+        if ($isApiRequest || !$isBackend) {
+            return;
+        }
+        // 添加当前模块名到 Request 对象
+        $request = w_obj(Request::class);
+        /**@var Request $request */
+        $request->addModule('Weline_Admin');
         $block = Block::getInstance();
         /**@var DataObject $data */
-        $data         = $event->getData('data');
-        $white_urls   = $data->getData('white_urls');
+        $data = $event->getData('data');
+        $white_urls = $data->getData('white_urls') ?? [];
         $white_urls[] = 'assets/images/favicon.ico';
         $white_urls[] = 'assets/css/bootstrap.min.css';
         $white_urls[] = 'assets/css/icons.min.css';
@@ -42,16 +57,36 @@ class Maintenance implements \Weline\Framework\Event\ObserverInterface
         $white_urls[] = 'assets/libs/metismenu/metisMenu.min.js';
         $white_urls[] = 'assets/libs/simplebar/simplebar.min.js';
         $white_urls[] = 'assets/libs/node-waves/waves.min.js';
-        $white        = false;
+        $white = false;
         foreach ($white_urls as $white_url_string) {
-            if (str_contains($req->getUri(), $white_url_string)) {
+            if (str_contains($uri, $white_url_string)) {
                 $white = true;
                 break;
             }
         }
         $data->setData('white_urls', $white_urls);
         if (!$white) {
-            die($block->fetchHtml('Weline_Admin::templates/maintenance.phtml'));
+            // 获取语言（从事件数据中读取，如果事件数据中有的话）
+            $lang = $data->getData('language') ?? \w_env('user.lang', 'zh_Hans_CN');
+            // 设置语言到 Request，以便模板能够使用正确的语言
+            $request->setData('WELINE_USER_LANG', $lang);
+            // 同步到 WelineEnv 和 $_SERVER
+            \Weline\Framework\Env\WelineEnv::set('user.lang', $lang, 'Maintenance Observer');
+            
+            // 标记为已处理，阻止 MaintenanceInterceptor 继续执行
+            $data->setData('handled', true);
+            // 使用 ResponseTerminateException 替代 exit，由 Runtime 层统一处理
+            throw new \Weline\Framework\Http\ResponseTerminateException(
+                503,
+                $block->fetchHtml('Weline_Admin::templates/maintenance.phtml'),
+                [
+                    'Content-Type' => 'text/html; charset=UTF-8',
+                    'Retry-After' => '3600',
+                    'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                    'Pragma' => 'no-cache',
+                    'Expires' => '0',
+                ]
+            );
         }
     }
 }

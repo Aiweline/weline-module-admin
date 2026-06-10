@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Weline\Admin\Observer;
 
 use Weline\Acl\Model\WhiteAclSource;
+use Weline\Framework\App\Debug;
 use Weline\Framework\DataObject\DataObject;
 use Weline\Framework\Event\Event;
 use Weline\Framework\Http\Url;
@@ -24,6 +25,7 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
         ['path' => 'admin/login/verificationcode'],
         ['path' => 'admin/login/index'],
         ['path' => 'admin/login'],
+        ['path' => 'admin/login/logout'],
     ];
     private Url $url;
     /**
@@ -34,7 +36,8 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
     public function __construct(
         Url            $url,
         WhiteAclSource $whiteAclSource
-    ) {
+    )
+    {
         $this->url = $url;
         $this->whiteAclSource = $whiteAclSource;
     }
@@ -42,7 +45,7 @@ class BackendWhitelistUrl implements \Weline\Framework\Event\ObserverInterface
     /**
      * @inheritDoc
      */
-    public function execute(Event $event)
+    public function execute(Event &$event): void
     {
         $white_acl_sources = self::white_urls;
         $this->whiteAclSource->insert($white_acl_sources, 'path')->fetch();

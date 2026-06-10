@@ -39,9 +39,15 @@ class Data extends \Weline\Framework\App\Helper
      */
     public function getRequestBackendUser(): BackendUser
     {
-        $username = $this->request->getParam('username');
+        // WLS 兼容：从 ObjectManager 获取当前请求的 Request 实例
+        // 不使用缓存的 $this->request，因为在 WLS 中它可能指向旧请求
+        $currentRequest = \Weline\Framework\Manager\ObjectManager::getInstance(Request::class);
+        $username = $currentRequest->getParam('username');
         try {
-            return clone $this->adminUser->clear()->load('username', $username);
+            // 使用 where 查询，确保大小写不敏感匹配
+            $user = clone $this->adminUser->clear();
+            $user->where('username', $username)->find()->fetch();
+            return $user;
         } catch (\Exception $exception) {
             return $this->adminUser;
         }
@@ -58,7 +64,7 @@ class Data extends \Weline\Framework\App\Helper
     public function getSessionUser(string $sess_id): BackendUser
     {
         try {
-            return clone $this->adminUser->clear()->load($this->adminUser::fields_sess_id, $sess_id);
+            return clone $this->adminUser->clear()->load($this->adminUser::schema_fields_sess_id, $sess_id);
         } catch (\Exception $exception) {
             return $this->adminUser;
         }

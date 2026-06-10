@@ -1,5 +1,20 @@
 <?php
 /**@var \Weline\Framework\View\Template $this */
+use Weline\Framework\Manager\ObjectManager;
+use Weline\Backend\Model\Config as BackendConfig;
+use Weline\FileManager\Helper\Image as ImageHelper;
+
+// 获取后台配置
+/** @var BackendConfig $backendConfig */
+$backendConfig = ObjectManager::getInstance(BackendConfig::class);
+$logoDark = $backendConfig->getConfig('logo_dark', 'Weline_Backend');
+$logoLight = $backendConfig->getConfig('logo_light', 'Weline_Backend');
+$logoSm = $backendConfig->getConfig('logo_sm', 'Weline_Backend');
+
+// 设置默认值，自定义 logo 转为 media URL
+$logoDark = $logoDark ? ImageHelper::pathToMediaUrl($logoDark, 70, 70) : '@static(Weline_Admin::assets/images/logo-dark.png)';
+$logoLight = $logoLight ? ImageHelper::pathToMediaUrl($logoLight, 70, 70) : '@static(Weline_Admin::assets/images/logo-light.png)';
+$logoSm = $logoSm ? ImageHelper::pathToMediaUrl($logoSm, 50, 50) : '@static(Weline_Admin::assets/images/logo-sm.png)';
 ?>
 <header id="page-topbar">
     <div class="navbar-header">
@@ -8,22 +23,22 @@
             <div class="navbar-brand-box text-center">
                 <a href="@admin-url('admin')" class="logo logo-dark">
                                 <span class="logo-sm">
-                                    <img src="@static(Weline_Admin::assets/images/logo-sm.png)" alt="logo-sm-dark"
+                                    <img src="<?= $logoSm ?>" alt="logo-sm-dark"
                                          height="50">
                                 </span>
                     <span class="logo-lg">
-                                    <img src="@static(Weline_Admin::assets/images/logo-dark.png)" alt="logo-dark"
+                                    <img src="<?= $logoDark ?>" alt="logo-dark"
                                          height="70">
                                 </span>
                 </a>
 
                 <a href="@admin-url('admin')" class="logo logo-light">
                                 <span class="logo-sm">
-                                    <img src="@static(Weline_Admin::assets/images/logo-sm.png)" alt="logo-sm-light"
+                                    <img src="<?= $logoSm ?>" alt="logo-sm-light"
                                          height="50">
                                 </span>
                     <span class="logo-lg">
-                                    <img src="@static(Weline_Admin::assets/images/logo-light.png)" alt="logo-light"
+                                    <img src="<?= $logoLight ?>" alt="logo-light"
                                          height="70">
                                 </span>
                 </a>
@@ -66,43 +81,16 @@
                 </div>
             </div>
 
-            <div class="dropdown d-none d-sm-inline-block">
-                <button type="button" class="btn header-item waves-effect"
-                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img class="" src="@static(Weline_Admin::assets/images/flags/zh_CN.jfif)" alt="<?= __('头部语言') ?>"
-                         height="16">
-                </button>
-                <div class="dropdown-menu dropdown-menu-end">
-                    <!-- item-->
-                    <a href='javascript:void(0);' class='dropdown-item notify-item'>
-                        <img src='@static(Weline_Admin::assets/images/flags/zh_CN.jfif)' alt='user-image' class='me-1'
-                             height='12'> <span class='align-middle'><?= __('中国') ?></span>
-                    </a>
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="@static(Weline_Admin::assets/images/flags/spain.jpg)" alt="user-image" class="me-1"
-                             height="12"> <span class="align-middle">Spanish</span>
-                    </a>
-
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="@static(Weline_Admin::assets/images/flags/germany.jpg)" alt="user-image" class="me-1"
-                             height="12"> <span class="align-middle">German</span>
-                    </a>
-
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="@static(Weline_Admin::assets/images/flags/italy.jpg)" alt="user-image" class="me-1"
-                             height="12"> <span class="align-middle">Italian</span>
-                    </a>
-
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="@static(Weline_Admin::assets/images/flags/russia.jpg)" alt="user-image" class="me-1"
-                             height="12"> <span class="align-middle">Russian</span>
-                    </a>
-                </div>
-            </div>
+            <!-- 语言切换 -->
+            <w:i18n:language:switcher />
+            <!-- 主题色系切换 -->
+            <button type="button"
+                    class="btn header-item noti-icon waves-effect ms-1"
+                    id="theme-mode-toggle"
+                    title="<?= __('主题色系切换') ?>"
+                    aria-label="<?= __('主题色系切换') ?>">
+                <i class="ri-sun-line"></i>
+            </button>
 
             <div class="dropdown d-none d-lg-inline-block ms-1">
                 <button type="button" class="btn header-item noti-icon waves-effect"
@@ -165,7 +153,7 @@
             </div>
             <!--通知 开始-->
 
-            <w:block class="Weline\Admin\Block\System\Notification"/>
+            <w:block class="Weline\Backend\Block\System\Notification"/>
 
             <!--通知 结束-->
 
@@ -202,3 +190,59 @@
         </div>
     </div>
 </header>
+<style>
+    #page-topbar {
+        z-index: 10050;
+    }
+
+    #page-topbar .dropdown-menu {
+        z-index: 10055;
+    }
+
+    .rightbar-overlay {
+        z-index: 10040;
+    }
+
+    .right-bar {
+        z-index: 10060;
+    }
+</style>
+<script>
+    (function () {
+        return;
+
+        var topbar = document.getElementById('page-topbar');
+        if (!topbar || typeof window.bootstrap === 'undefined' || !window.bootstrap.Dropdown) {
+            return;
+        }
+
+        var Dropdown = window.bootstrap.Dropdown;
+        // Bootstrap 新版会自动处理 data-bs-toggle="dropdown"，
+        // 仅在旧版缺失 getOrCreateInstance 时做兜底，避免双重 toggle 导致无法展开。
+        if (Dropdown && typeof Dropdown.getOrCreateInstance === 'function') {
+            return;
+        }
+
+        var triggers = topbar.querySelectorAll('[data-bs-toggle="dropdown"]');
+        triggers.forEach(function (trigger) {
+            if (trigger.dataset.welineDropdownBound === '1') {
+                return;
+            }
+            trigger.dataset.welineDropdownBound = '1';
+            trigger.addEventListener('click', function (event) {
+                event.preventDefault();
+                var config = {autoClose: true};
+                var instance = null;
+                if (Dropdown && typeof Dropdown.getInstance === 'function') {
+                    instance = Dropdown.getInstance(trigger);
+                    if (!instance) {
+                        instance = new Dropdown(trigger, config);
+                    }
+                } else {
+                    instance = new Dropdown(trigger, config);
+                }
+                instance.toggle();
+            });
+        });
+    })();
+</script>

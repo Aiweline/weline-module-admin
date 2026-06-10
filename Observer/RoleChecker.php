@@ -12,30 +12,31 @@ declare(strict_types=1);
 
 namespace Weline\Admin\Observer;
 
-use Weline\Admin\Session\AdminSession;
+use Weline\Framework\Session\SessionFactory;
 use Weline\Framework\Event\Event;
 
 class RoleChecker implements \Weline\Framework\Event\ObserverInterface
 {
     /**
-     * @var \Weline\Admin\Session\AdminSession
-     */
-    private AdminSession $session;
-
-    function __construct(
-        AdminSession $session
-    )
-    {
-        $this->session = $session;
-    }
-
-    /**
      * @inheritDoc
      */
-    public function execute(Event $event)
+    public function execute(Event &$event): void
     {
+        // WLS 兼容：每次执行时获取当前请求的 BackendSession，避免 Observer 单例持有旧请求的 session
+        $session = SessionFactory::getInstance()->createBackendSession();
+        $user = $session->getUser();
+        
+        if ($user === null || !method_exists($user, 'getRole')) {
+            return;
+        }
+        $userRole = $user->getRole();
+        if ($userRole === null) {
+            return;
+        }
         /**@var \Weline\Acl\Model\Role $role */
         $role = $event->getData('data');
-        $role->setData($this->session->getLoginUser()->getRole()->getData());
+        if ($role !== null) {
+            $role->setData($userRole->getData());
+        }
     }
 }

@@ -4,7 +4,7 @@
   "type": "weline-module",
   "require": {
     "php": "^8.0",
-    "weline/framework": "^1.0"
+    "weline/framework": "@dev"
   },
   "authors": [
     {

@@ -37,6 +37,9 @@ class Total extends \Weline\Framework\View\Block
         if (!$this->getData('tip')) {
             throw new Exception('未提供提示tip参数');
         }
+        # 将标题和提示赋值给模板
+        $this->assign('title', $this->getData('title'));
+        $this->assign('tip', $this->getData('tip'));
         # 检测比较期限是否提供
         $last_period = $this->getData('last-period') ?? ''; # 默认用昨日期限
         $now_period = $this->getData('now-period') ?? ''; # 默认用今日期限
@@ -99,58 +102,48 @@ class Total extends \Weline\Framework\View\Block
         $rate = number_format($rate, 0);
         $this->assign('up_down', $rate > 0 ? 'up' : 'down');
         $this->assign('rate', $rate);
-        $id = 'id' . md5(json_encode($this->getData()));
+        // 使用 md5 + uniqid 确保每个 block 实例的 ID 唯一，避免重复声明（如 hook 多次渲染同数据块）
+        $id = 'id' . md5(json_encode($this->getData()) . '_' . uniqid('', true));
         $this->assign('id', $id);
         # class
         $this->assign('class', $rate > 0 ? 'text-danger' : 'text-success');
         $options_name = 'radialoptions' . $id;
         $chart_name = 'radialchart' . $id;
-        # 向footer中注入js脚本
+        # 向footer中注入js脚本（需在 ApexCharts 加载后执行，使用 IIFE + 延迟检测）
         $this->getFooter()->append('Weline_Admin::head',
             "<script>
-// 添加footer脚本
-let {$options_name} = {
-    series: [{$rate}],
-    chart: {
-        type: 'radialBar',
-        width: 72,
-        height: 72,
-        sparkline: {
-            enabled: true
+(function() {
+    function initRadialChart() {
+        if (typeof ApexCharts === 'undefined') {
+            setTimeout(initRadialChart, 50);
+            return;
         }
-    },
-    dataLabels: {
-        enabled: false
-    },
-    colors: ['#0ab39c'],
-    stroke: {
-        lineCap: 'round'
-    },
-    plotOptions: {
-        radialBar: {
-            hollow: {
-                margin: 0,
-                size: '70%'
-            },
-            track: {
-                margin: 0,
-            },
-
-            dataLabels: {
-                name: {
-                    show: false
-                },
-                value: {
-                    offsetY: 5,
-                    show: true
+        var opts = {
+            series: [{$rate}],
+            chart: { type: 'radialBar', width: 72, height: 72, sparkline: { enabled: true } },
+            dataLabels: { enabled: false },
+            colors: ['#0ab39c'],
+            stroke: { lineCap: 'round' },
+            plotOptions: {
+                radialBar: {
+                    hollow: { margin: 0, size: '70%' },
+                    track: { margin: 0 },
+                    dataLabels: { name: { show: false }, value: { offsetY: 5, show: true } }
                 }
             }
+        };
+        var el = document.querySelector('#{$id}');
+        if (el) {
+            var chart = new ApexCharts(el, opts);
+            chart.render();
         }
     }
-};
-
-    var {$chart_name} = new ApexCharts(document.querySelector('#{$id}'), {$options_name});
-{$chart_name}.render();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initRadialChart);
+    } else {
+        initRadialChart();
+    }
+})();
                 </script>"
         );
     }

@@ -2,10 +2,15 @@
 /**@var \Weline\Framework\View\Template $this */
 /**@var \Weline\Backend\Block\ThemeConfig $themeConfig */
 $themeConfig = \Weline\Framework\Manager\ObjectManager::getInstance(\Weline\Backend\Block\ThemeConfig::class);
+
+// 使用 w_env() 获取语言和货币，替代直接访问 $_SERVER
+$currentLang = \w_env('user.lang', 'zh_Hans_CN');
+$currentCurrency = \w_env('user.currency', 'CNY');
+$backendRoutePrefix = (string)(\Weline\Framework\App\Env::getAreaRoutePrefix('backend') ?: \Weline\Framework\App\Env::getInstance()->getConfig('admin'));
+$restFrontendRoutePrefix = (string)(\Weline\Framework\App\Env::getAreaRoutePrefix('rest_frontend') ?: \Weline\Framework\App\Env::getInstance()->getConfig('api'));
+$restBackendRoutePrefix = (string)(\Weline\Framework\App\Env::getAreaRoutePrefix('rest_backend') ?: \Weline\Framework\App\Env::getInstance()->getConfig('api_admin'));
 ?>
-<?php
-/**@var \Weline\Framework\View\Template $this */
-?>
+<base href="@backend-url('/')">
 <meta charset="UTF-8">
 <title><?php echo $this->getData('title'); ?></title>
 <!--元数据-->
@@ -44,12 +49,131 @@ endif;
 <!-- App Css-->
 <link href="<?= $this->fetchTagSourceFile('statics', 'Weline_Admin::assets/css/app' . ($themeConfig->getThemeModel() ? '-' . $themeConfig->getThemeModel() : '') . '.min.css') ?>"
       rel="stylesheet" type="text/css"/>
+<?php
+// 始终加载主题基础变量CSS（所有变量的默认值）
+// 注意：必须先加载 _colors.css（定义所有 --backend-* 颜色变量）
+?>
+<theme:css>Weline_Theme::theme/backend/variables/_colors.css</theme:css>
+<theme:css>Weline_Theme::theme/backend/variables/_typography.css</theme:css>
+<theme:css>Weline_Theme::theme/backend/variables/_spacing.css</theme:css>
+<theme:css>Weline_Theme::theme/backend/variables/_borders.css</theme:css>
+<theme:css>Weline_Theme::theme/backend/variables/_shadows.css</theme:css>
+<theme:css>Weline_Theme::theme/backend/colors/_default.css</theme:css>
+<theme:css>Weline_Theme::theme/backend/assets/css/theme.css</theme:css>
+<?php
+// 始终加载暗色模式CSS（通过属性选择器 [data-layout-mode="dark"] 等控制生效）
+// 这样用户可以动态切换主题模式，无需重新加载页面
+?>
+<theme:css>Weline_Theme::theme/backend/colors/_dark.css</theme:css>
+<?php
+// 加载主题色系和变量CSS文件（预览配置）
+$previewContextService = \Weline\Framework\Manager\ObjectManager::getInstance(\Weline\Theme\Service\PreviewContextService::class);
+if ($previewContextService->shouldUseStoredContext()) {
+    $previewContext = $previewContextService->getCurrentContext();
+    $previewThemeId = $previewContextService->getThemeIdForArea('backend', $previewContext, false);
+    if ($previewThemeId > 0) {
+        $themeContext = \Weline\Framework\Manager\ObjectManager::getInstance(\Weline\Theme\Service\ThemeContextService::class);
+        $theme = $themeContext->resolveTheme('backend');
+        if ($theme && $theme->getId()) {
+        // 加载色系CSS文件
+        $themeMode = \Weline\Theme\Helper\LayoutScanner::getColorConfig($theme, 'backend');
+        if ($themeMode && $themeMode !== 'light'): ?>
+<theme:css>Weline_Theme::theme/backend/colors/_<?= $themeMode ?>.css</theme:css>
+<?php 
+        endif;
+        
+        // 加载变量CSS文件
+        $variables = \Weline\Theme\Helper\LayoutScanner::getVariablesConfig($theme, 'backend');
+        foreach ($variables as $variable) {
+            if ($variable): ?>
+                <theme:css>Weline_Theme::theme/backend/variables/_<?= $variable ?>.css</theme:css>
+<?php 
+            endif;
+        }
+    }
+    }
+}
+?>
+<css>Weline_Admin::css/modern-admin-polish.css</css>
 <!--JS-->
 <js>Weline_Backend::/backend/lib/jquery/3.6.0/jquery.js</js>
+<?php
+// 注入主题配置（必须在 theme.js 加载前）
+$isDev = defined('DEV') && DEV;
+$baseUrl = $this->request->getBaseUrl();
+
+// 根据环境设置模块配置URL和基础URL（weline-api.js 位于 Weline_Backend 模块）
+if ($isDev) {
+    $modulesConfigUrl = '/Weline/Backend/view/statics/base/weline.modules.js';
+    $modulesBaseUrl = '/Weline/Backend/view/statics/js/weline-api';
+} else {
+    $modulesConfigUrl = '/static/Weline/Backend/base/weline.modules.js';
+    $modulesBaseUrl = '/static/Weline/Backend/js/weline-api';
+}
+
+$__dv = @json_decode((string)@file_get_contents(BP . 'var/deploy/current.json'), true);
+$themeConfigPayload = [
+    'env' => [
+        'WELINE_ENV' => DEV ? 'DEV' : 'PROD',
+        'DEV' => DEV,
+        'PROD' => !DEV,
+    ],
+    'baseUrl' => $baseUrl,
+    'area' => $backendRoutePrefix,
+    'modulesConfigUrl' => $modulesConfigUrl,
+    'modulesBaseUrl' => $modulesBaseUrl,
+    'deployVersion' => ($__dv && is_array($__dv)) ? ($__dv['deploy_version'] ?? 'dev') : 'dev',
+    'workerBuildId' => ($__dv && is_array($__dv)) ? ($__dv['worker_build_id'] ?? 'dev') : 'dev',
+    'currentLang' => $currentLang,
+    'currentCurrency' => $currentCurrency,
+    'debug' => DEV,
+    'url' => [
+        'adminArea' => $backendRoutePrefix,
+        'apiArea' => $restFrontendRoutePrefix,
+        'apiAdminArea' => $restBackendRoutePrefix,
+    ],
+    'i18n' => [
+        'confirm' => __('确定'),
+        'cancel' => __('取消'),
+        'confirm_action' => __('确认操作'),
+        'retry' => __('请重试'),
+        'loading_failed' => __('加载失败'),
+        'input' => __('输入'),
+    ],
+];
+?>
+<script data-no-extract="true">
+window.__WelineThemeConfig = <?= json_encode($themeConfigPayload, JSON_UNESCAPED_UNICODE) ?>;
+</script>
+<!-- 主题核心 JS（Weline 对象、模块加载器、API 代理等） -->
+<theme:js>Weline_Theme::theme/backend/assets/js/theme.js</theme:js>
+<!-- 后台全局组件（BackendToast、BackendConfirm 等） -->
+<theme:js>Weline_Theme::theme/backend/assets/js/backend-components.js</theme:js>
 <?php if (DEV): ?>
-<!--        <script src="@static(Weline_Backend::/backend/lib/jquery/3.6.0/jquery.map)"></script>-->
+    <!--        <script src="@static(Weline_Backend::/backend/lib/jquery/3.6.0/jquery.map)"></script>-->
 <?php endif; ?>
+<!-- Live Preview postMessage listener for Visual Editor -->
+<script data-no-extract="true">
+(function() {
+    'use strict';
+    // 监听来自Visual Editor的postMessage (Live Preview支持)
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'WELINE_THEME_UPDATE') {
+            var cssVars = event.data.cssVars || {};
+            var root = document.documentElement;
+            for (var varName in cssVars) {
+                if (cssVars.hasOwnProperty(varName)) {
+                    root.style.setProperty(varName, cssVars[varName]);
+                }
+            }
+            console.log('[Theme] Live preview updated:', Object.keys(cssVars).length, 'variables');
+        }
+    });
+})();
+</script>
 <!--加载配置页头-->
 <?php
-echo $this->getHeader()->getHtml();
+if($this->getHeader()){
+    echo $this->getHeader()->getHtml();
+}
 ?>
