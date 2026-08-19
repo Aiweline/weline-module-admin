@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Weline\Admin\Service;
 
 use Weline\Admin\Helper\MenuUrlValidator;
-use Weline\Acl\Service\AclService;
-use Weline\Backend\Model\BackendUser;
-use Weline\Backend\Service\MenuServiceInterface;
+use Weline\Acl\Api\Authorization\AuthorizationServiceInterface;
+use Weline\Backend\Api\Auth\BackendLoginAccount;
+use Weline\Backend\Api\Menu\MenuReaderInterface;
 use Weline\Framework\App\Env;
 use Weline\Framework\App\State;
 use Weline\Framework\Http\Request;
@@ -15,10 +15,18 @@ use Weline\Framework\Http\Url;
 class BackendLoginReturnUrlService
 {
     private const SESSION_KEYS = ['backend_login_referer', 'referer'];
+    private const UNSAFE_RETURN_ROUTE_SEGMENTS = [
+        'batch',
+        'delete',
+        'download',
+        'export',
+        'import',
+        'upload',
+    ];
 
     public function __construct(
-        private readonly AclService $aclService,
-        private readonly MenuServiceInterface $menuService,
+        private readonly AuthorizationServiceInterface $aclService,
+        private readonly MenuReaderInterface $menuService,
         private readonly Request $request,
         private readonly Url $url
     ) {
@@ -31,9 +39,11 @@ class BackendLoginReturnUrlService
             $params['no_access_reason'] = $reason;
         }
 
-        $returnUrl = $this->normalizeCandidateUrl($currentUrl);
-        if ($returnUrl !== null) {
-            $params['return_url'] = $returnUrl;
+        if ($this->shouldCaptureCurrentRequestReturnUrl($this->request, $currentUrl)) {
+            $returnUrl = $this->normalizeCandidateUrl($currentUrl);
+            if ($returnUrl !== null) {
+                $params['return_url'] = $this->toRelativeReturnUrl($returnUrl);
+            }
         }
 
         if ($params === []) {
@@ -43,7 +53,22 @@ class BackendLoginReturnUrlService
         return $loginUrl . (str_contains($loginUrl, '?') ? '&' : '?') . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
-    public function resolveForUser(BackendUser $user, string $explicitReturnUrl = ''): ?string
+    public function shouldCaptureCurrentRequestReturnUrl(?Request $request = null, string $currentUrl = ''): bool
+    {
+        $request ??= $this->request;
+        if (!$request->isDocumentNavigationRequest()) {
+            return false;
+        }
+
+        $path = (string)(parse_url($currentUrl, PHP_URL_PATH) ?: '');
+        if ($path === '') {
+            $path = (string)(parse_url($request->getUrlBuilder()->getCurrentUrl(), PHP_URL_PATH) ?: '');
+        }
+
+        return !$this->isApiOrInterfacePath($path);
+    }
+
+    public function resolveForUser(BackendLoginAccount $user, string $explicitReturnUrl = ''): ?string
     {
         $candidate = $this->validateForUser($user, $explicitReturnUrl);
         if ($candidate !== null) {
@@ -86,7 +111,7 @@ class BackendLoginReturnUrlService
         return $this->ensureSameOrigin($candidate);
     }
 
-    public function validateForUser(BackendUser $user, string $candidate): ?string
+    public function validateForUser(BackendLoginAccount $user, string $candidate): ?string
     {
         $normalized = $this->normalizeCandidateUrl($candidate);
         if ($normalized === null) {
@@ -97,14 +122,6 @@ class BackendLoginReturnUrlService
         if ($routePath === '') {
             return null;
         }
-        if (str_contains(strtolower($routePath), 'pagebuilder/backend/ai-site-agent/workspace-preview')) {
-            $query = (string)(parse_url($normalized, PHP_URL_QUERY) ?: '');
-            parse_str($query, $params);
-            if ((string)($params['public_id'] ?? '') === '') {
-                return null;
-            }
-        }
-
         $roleId = $this->resolveRoleId($user);
         if ($roleId <= 0) {
             return null;
@@ -117,7 +134,7 @@ class BackendLoginReturnUrlService
         return $this->aclService->isRouteAllowed($roleId, $routePath, 'GET') ? $normalized : null;
     }
 
-    public function resolveDefaultRedirectTarget(BackendUser $user): string
+    public function resolveDefaultRedirectTarget(BackendLoginAccount $user): string
     {
         $roleId = $this->resolveRoleId($user);
         if ($roleId > 0) {
@@ -147,19 +164,34 @@ class BackendLoginReturnUrlService
             return false;
         }
 
-        if (str_contains($normalized, 'add')
-            || str_contains($normalized, 'edit')
-            || str_contains($normalized, 'download')
-            || str_contains($normalized, 'upload')
-            || str_contains($normalized, 'export')
-            || str_contains($normalized, 'import')
-            || str_contains($normalized, 'delete')
-            || str_contains($normalized, 'batch')
-        ) {
+        if ($this->hasUnsafeReturnRouteSegment($normalized)) {
             return false;
         }
 
+        if ($this->looksLikeBackendControllerRoute($normalized)) {
+            return true;
+        }
+
         return $this->isKnownBackendReturnRoute($normalized);
+    }
+
+    private function hasUnsafeReturnRouteSegment(string $routePath): bool
+    {
+        $segments = array_values(array_filter(
+            explode('/', trim($routePath, '/')),
+            static fn(string $segment): bool => $segment !== ''
+        ));
+
+        foreach ($segments as $segment) {
+            $segment = strtolower($segment);
+            foreach (self::UNSAFE_RETURN_ROUTE_SEGMENTS as $unsafeSegment) {
+                if (str_contains($segment, $unsafeSegment)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function isKnownBackendReturnRoute(string $routePath): bool
@@ -177,6 +209,17 @@ class BackendLoginReturnUrlService
         } catch (\Throwable) {
             return false;
         }
+    }
+
+    private function looksLikeBackendControllerRoute(string $routePath): bool
+    {
+        $segments = array_values(array_filter(
+            explode('/', trim($routePath, '/')),
+            static fn(string $segment): bool => $segment !== ''
+        ));
+
+        return isset($segments[0], $segments[1], $segments[2])
+            && strtolower($segments[1]) === 'backend';
     }
 
     private function extractRoutePath(string $url): string
@@ -198,18 +241,62 @@ class BackendLoginReturnUrlService
             }
             array_shift($segments);
         }
+        if ($backendPrefix !== '' && isset($segments[0]) && strcasecmp((string)$segments[0], $backendPrefix) === 0) {
+            array_shift($segments);
+        }
 
         return trim(implode('/', $segments), '/');
     }
 
-    private function resolveRoleId(BackendUser $user): int
+    private function isApiOrInterfacePath(string $path): bool
     {
-        $role = $user->getRoleModel();
-        if ($role && $role->getId()) {
-            return (int)$role->getId();
+        $routePath = strtolower($this->extractRoutePath($path));
+        if ($routePath === '') {
+            return false;
+        }
+
+        $segments = array_values(array_filter(
+            explode('/', trim($routePath, '/')),
+            static fn(string $segment): bool => $segment !== ''
+        ));
+
+        foreach ($segments as $segment) {
+            if (in_array($segment, ['api', 'rest', 'graphql'], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function resolveRoleId(BackendLoginAccount $user): int
+    {
+        if ($user->getRoleId() > 0) {
+            return $user->getRoleId();
         }
 
         return (int)$user->getId() === 1 ? 1 : 0;
+    }
+
+    private function toRelativeReturnUrl(string $returnUrl): string
+    {
+        $parsed = parse_url($returnUrl);
+        if (!is_array($parsed) || (!isset($parsed['scheme']) && !isset($parsed['host']))) {
+            return $returnUrl;
+        }
+
+        $path = (string)($parsed['path'] ?? '/');
+        if ($path === '') {
+            $path = '/';
+        }
+        if (!str_starts_with($path, '/')) {
+            $path = '/' . $path;
+        }
+
+        $query = isset($parsed['query']) && $parsed['query'] !== '' ? '?' . $parsed['query'] : '';
+        $fragment = isset($parsed['fragment']) && $parsed['fragment'] !== '' ? '#' . $parsed['fragment'] : '';
+
+        return $path . $query . $fragment;
     }
 
     private function ensureSameOrigin(string $candidate): string
@@ -254,6 +341,17 @@ class BackendLoginReturnUrlService
         $path = '/' . trim($path, '/');
         $segments = explode('/', trim($path, '/'));
         $firstSegment = (string)($segments[0] ?? '');
+        $backendPrefix = trim((string)(Env::getAreaRoutePrefix('backend') ?? ''), '/');
+
+        if ($backendPrefix !== ''
+            && isset($segments[0], $segments[1], $segments[2], $segments[3])
+            && strcasecmp((string)$segments[0], $backendPrefix) === 0
+            && $this->isCurrencySegment($segments[1])
+            && $this->isLocaleSegment($segments[2])
+        ) {
+            array_splice($segments, 1, 2);
+            return '/' . implode('/', $segments);
+        }
 
         if (isset($segments[1], $segments[2], $segments[3])
             && $firstSegment !== ''
@@ -270,7 +368,8 @@ class BackendLoginReturnUrlService
 
     private function isCurrencySegment(string $segment): bool
     {
-        return State::isAllowedCurrencyCode($segment);
+        return State::isAllowedCurrencyCode($segment)
+            || (bool)preg_match('/^[A-Z]{3}$/', $segment);
     }
 
     private function isLocaleSegment(string $segment): bool

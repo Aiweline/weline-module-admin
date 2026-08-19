@@ -1,50 +1,60 @@
 <?php
 /** @var \Weline\Framework\View\Template $this */
-use Weline\Backend\Model\Config as BackendConfig;
-use Weline\FileManager\Helper\Image as ImageHelper;
 use Weline\Framework\Manager\ObjectManager;
+use Weline\Theme\Helper\SiteBrand;
 
-$backendConfig = ObjectManager::getInstance(BackendConfig::class);
-$template = $this;
-$toBackendLogoUrl = static function (string $path, int $width, int $height): string {
-    $path = trim($path);
-    if ($path === '') {
-        return '';
-    }
-    if (str_starts_with($path, 'http') || str_starts_with($path, '//') || str_starts_with($path, '/static/')) {
-        return $path;
-    }
-
-    $relative = ltrim($path, '/\\');
-    foreach (['pub/media/', 'media/'] as $prefix) {
-        if (str_starts_with($relative, $prefix)) {
-            $relative = substr($relative, strlen($prefix));
-            break;
-        }
-    }
-
-    $mediaFile = defined('PUB') ? PUB . 'media' . DS . str_replace(['/', '\\'], DS, $relative) : '';
-    if ($relative !== '' && $mediaFile !== '' && is_file($mediaFile)) {
-        return '/media/' . str_replace('\\', '/', $relative);
-    }
-
-    return ImageHelper::pathToMediaUrl($path, $width, $height);
-};
-$resolveBackendLogo = static function (string $configKey, string $defaultSource, int $width, int $height) use ($backendConfig, $template, $toBackendLogoUrl): string {
-    $configured = $backendConfig->getConfig($configKey, 'Weline_Backend') ?: '';
-    if ($configured !== '') {
-        return $toBackendLogoUrl($configured, $width, $height);
-    }
-
-    return $template->fetchTagSourceFile('statics', $defaultSource)
-        ?: $template->fetchTagSourceFile('statics', 'Weline_Backend::img/logo.png')
-        ?: '/static/Weline/Admin/assets/images/logo-weline-default.svg';
-};
-
-$logoSm = $resolveBackendLogo('logo_sm', 'Weline_Admin::assets/images/logo-sm.png', 50, 50);
-$logoDark = $resolveBackendLogo('logo_dark', 'Weline_Admin::assets/images/logo-dark.png', 70, 70);
-$logoLight = $resolveBackendLogo('logo_light', 'Weline_Admin::assets/images/logo-light.png', 70, 70);
+$siteBrand = ObjectManager::getInstance(SiteBrand::class);
+$logoDark = $siteBrand->resolveBackendLogoUrl($this, 'logo_dark', 70, 70);
+$logoLight = $siteBrand->resolveBackendLogoUrl($this, 'logo_light', 70, 70);
+$logoSm = $siteBrand->resolveMediaUrl('logo_sm', 50, 50);
+if ($logoSm === '') {
+    $logoSm = $siteBrand->resolveBackendLogoUrl($this, 'logo_dark', 50, 50);
+}
 ?>
+<style data-no-extract="true" data-admin-topbar-dark-fix="true">
+    #page-topbar .navbar-header .header-item,
+    #page-topbar .navbar-header .dropdown .header-item,
+    #page-topbar .navbar-header .dropdown .show.header-item {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 44px !important;
+        height: 44px !important;
+        margin: 0 3px !important;
+        padding: 0 14px !important;
+        border-radius: 12px !important;
+        line-height: 1 !important;
+    }
+
+    #page-topbar #vertical-menu-btn,
+    #page-topbar [data-weline-backend-theme-trigger],
+    #page-topbar .navbar-header .noti-icon,
+    #page-topbar .navbar-header .weline-notif-btn {
+        width: 44px !important;
+        min-width: 44px !important;
+        padding: 0 !important;
+    }
+
+    #page-topbar .navbar-header .header-item i {
+        line-height: 1 !important;
+    }
+
+    #page-topbar .navbar-brand-box .logo img {
+        object-fit: contain !important;
+        box-sizing: border-box !important;
+    }
+
+    body[data-theme-mode="dark"] #page-topbar .navbar-brand-box .logo img,
+    body[data-layout-mode="dark"] #page-topbar .navbar-brand-box .logo img,
+    body[data-bs-theme="dark"] #page-topbar .navbar-brand-box .logo img,
+    body[data-topbar="dark"] #page-topbar .navbar-brand-box .logo img,
+    body[data-sidebar="dark"] #page-topbar .navbar-brand-box .logo img {
+        padding: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+</style>
 <header id="page-topbar">
     <div class="navbar-header">
         <div class="d-flex align-items-center">
@@ -75,13 +85,18 @@ $logoLight = $resolveBackendLogo('logo_light', 'Weline_Admin::assets/images/logo
         <div class="d-flex align-items-center">
             <w:i18n:language:switcher />
 
-            <button type="button"
-                    class="btn header-item noti-icon waves-effect ms-1"
-                    id="theme-mode-toggle"
-                    title="<?= __('Toggle light/dark mode') ?>"
-                    aria-label="<?= __('Toggle light/dark mode') ?>">
-                <i class="ri-moon-clear-line"></i>
-            </button>
+            <div class="dropdown d-inline-block ms-1">
+                <button type="button" id="topbar-theme-mode" class="btn header-item noti-icon waves-effect"
+                        data-bs-toggle="dropdown" data-weline-backend-theme-trigger
+                        aria-haspopup="true" aria-expanded="false" aria-label="<?= __('主题模式') ?>">
+                    <i class="mdi mdi-laptop"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="topbar-theme-mode">
+                    <button type="button" class="dropdown-item" data-weline-backend-theme-mode="system" data-weline-theme-mode="system"><?= __('跟随系统') ?></button>
+                    <button type="button" class="dropdown-item" data-weline-backend-theme-mode="light" data-weline-theme-mode="light"><?= __('明亮模式') ?></button>
+                    <button type="button" class="dropdown-item" data-weline-backend-theme-mode="dark" data-weline-theme-mode="dark"><?= __('暗黑模式') ?></button>
+                </div>
+            </div>
 
             <?php echo framework_view_process_block([
                 'class' => 'Weline\\Backend\\Block\\System\\Notification',
@@ -94,7 +109,7 @@ $logoLight = $resolveBackendLogo('logo_light', 'Weline_Admin::assets/images/logo
                          src="<?= $this->getAvatar() ?>"
                          alt="avatar">
                     <span class="d-none d-xl-inline-block ms-1"><?= $this->getUser()->getUsername() ?></span>
-                    <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
+                    <i class="ri-arrow-down-s-line d-none d-xl-inline-block"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">
                     <a class="dropdown-item text-danger" href="<?= $this->getBackendUrl('admin/login/logout') ?>">
@@ -105,7 +120,7 @@ $logoLight = $resolveBackendLogo('logo_light', 'Weline_Admin::assets/images/logo
 
             <div class="dropdown d-inline-block">
                 <button type="button" class="btn header-item noti-icon right-bar-toggle waves-effect">
-                    <i class="mdi mdi-cog"></i>
+                    <i class="ri-settings-3-line"></i>
                 </button>
             </div>
         </div>
@@ -116,7 +131,8 @@ $logoLight = $resolveBackendLogo('logo_light', 'Weline_Admin::assets/images/logo
         z-index: 10050;
     }
 
-    #page-topbar .dropdown-menu {
+    #page-topbar .dropdown-menu,
+    #page-topbar .weline-i18n-switcher-panel {
         z-index: 10055;
     }
 
@@ -128,12 +144,222 @@ $logoLight = $resolveBackendLogo('logo_light', 'Weline_Admin::assets/images/logo
         right: 0;
         max-width: min(420px, calc(100vw - 16px));
     }
+
+    @media (max-width: 575.98px) {
+        #page-topbar,
+        #page-topbar .navbar-header {
+            max-width: 100vw !important;
+            /* visible: language/user dropdowns must escape the 72px header box */
+            overflow: visible !important;
+        }
+
+        #page-topbar .navbar-header {
+            height: 64px !important;
+            padding: 0 8px !important;
+            gap: 6px !important;
+        }
+
+        #page-topbar .navbar-header > .d-flex {
+            min-width: 0 !important;
+            align-items: center !important;
+        }
+
+        #page-topbar .navbar-header > .d-flex:first-child {
+            flex: 0 0 auto !important;
+            gap: 4px !important;
+        }
+
+        #page-topbar .navbar-header > .d-flex:last-child {
+            flex: 1 1 auto !important;
+            justify-content: flex-end !important;
+            gap: 3px !important;
+            overflow: hidden !important;
+        }
+
+        #page-topbar .navbar-brand-box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: auto !important;
+            min-width: 52px !important;
+            padding: 0 2px !important;
+            flex: 0 0 auto !important;
+        }
+
+        #page-topbar .logo {
+            line-height: 64px !important;
+        }
+
+        #page-topbar .logo .logo-lg {
+            display: none !important;
+        }
+
+        #page-topbar .logo .logo-sm {
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+
+        #page-topbar .navbar-brand-box .logo img {
+            width: 50px !important;
+            height: 50px !important;
+            max-width: 50px !important;
+            max-height: 50px !important;
+        }
+
+        #page-topbar .navbar-header .header-item,
+        #page-topbar .navbar-header .dropdown .header-item,
+        #page-topbar .navbar-header .dropdown .show.header-item {
+            width: 38px !important;
+            min-width: 38px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 1px !important;
+            padding: 0 !important;
+            border-radius: 12px !important;
+        }
+
+        #page-topbar #vertical-menu-btn,
+        #page-topbar [data-weline-backend-theme-trigger],
+        #page-topbar .navbar-header .noti-icon,
+        #page-topbar .navbar-header .weline-notif-btn {
+            width: 38px !important;
+            min-width: 38px !important;
+        }
+
+        #page-topbar [data-i18n-switcher] {
+            min-width: 0 !important;
+            flex: 0 1 auto !important;
+        }
+
+        #page-topbar .weline-i18n-switcher-toggle {
+            width: 72px !important;
+            min-width: 72px !important;
+            max-width: 72px !important;
+            padding: 0 8px !important;
+            gap: 5px !important;
+            justify-content: flex-start !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+        }
+
+        #page-topbar .weline-i18n-switcher-toggle .align-middle {
+            display: inline-block !important;
+            max-width: 28px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        #page-topbar .user-dropdown .header-item {
+            width: 38px !important;
+            min-width: 38px !important;
+        }
+
+        #page-topbar .header-profile-user {
+            width: 32px !important;
+            height: 32px !important;
+            padding: 2px !important;
+        }
+
+        #page-topbar .navbar-header > .d-flex:last-child > .dropdown:last-child,
+        #page-topbar .navbar-header .dropdown:has(> .right-bar-toggle),
+        #page-topbar .navbar-header .right-bar-toggle.header-item,
+        #page-topbar .navbar-header .noti-icon.right-bar-toggle,
+        #page-topbar .right-bar-toggle {
+            display: none !important;
+        }
+
+        #page-topbar .dropdown-menu.dropdown-menu-end,
+        #page-topbar .weline-i18n-switcher-panel,
+        #page-topbar .weline-notif-menu,
+        #page-topbar .weline-notification-menu {
+            left: auto !important;
+            right: 8px !important;
+            max-width: calc(100vw - 16px) !important;
+        }
+    }
+
+    @media (max-width: 390px) {
+        #page-topbar .navbar-header {
+            padding: 0 6px !important;
+            gap: 4px !important;
+        }
+
+        #page-topbar .navbar-brand-box {
+            min-width: 46px !important;
+        }
+
+        #page-topbar .navbar-brand-box .logo img {
+            width: 44px !important;
+            height: 44px !important;
+            max-width: 44px !important;
+            max-height: 44px !important;
+        }
+
+        #page-topbar .navbar-header .header-item,
+        #page-topbar .navbar-header .dropdown .header-item,
+        #page-topbar .navbar-header .dropdown .show.header-item,
+        #page-topbar #vertical-menu-btn,
+        #page-topbar [data-weline-backend-theme-trigger],
+        #page-topbar .navbar-header .noti-icon,
+        #page-topbar .navbar-header .weline-notif-btn,
+        #page-topbar .user-dropdown .header-item {
+            width: 36px !important;
+            min-width: 36px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+        }
+
+        #page-topbar .weline-i18n-switcher-toggle {
+            width: 58px !important;
+            min-width: 58px !important;
+            max-width: 58px !important;
+            padding: 0 7px !important;
+        }
+
+        #page-topbar .weline-i18n-switcher-toggle .align-middle {
+            display: none !important;
+        }
+    }
 </style>
 <script>
     (function () {
         var topbar = document.getElementById('page-topbar');
         if (!topbar) {
             return;
+        }
+
+        var sidebarToggle = document.getElementById('vertical-menu-btn');
+        if (sidebarToggle && sidebarToggle.dataset.welineSidebarToggleBound !== '1') {
+            sidebarToggle.dataset.welineSidebarToggleBound = '1';
+            sidebarToggle.addEventListener('click', function (event) {
+                event.preventDefault();
+                // Capture-phase handler owns the toggle; stop jQuery duplicates from double-flipping.
+                event.stopImmediatePropagation();
+
+                document.body.classList.toggle('sidebar-enable');
+                if (window.innerWidth >= 992) {
+                    document.body.classList.toggle('vertical-collpsed');
+                    // Persist collapse/expand for the current backend user across refresh.
+                    if (typeof window.setThemeConfig === 'function') {
+                        var collapsed = document.body.classList.contains('vertical-collpsed');
+                        if (collapsed) {
+                            document.body.setAttribute('data-keep-enlarged', 'true');
+                        } else {
+                            document.body.removeAttribute('data-keep-enlarged');
+                        }
+                        window.setThemeConfig({
+                            layouts: {
+                                'data-keep-enlarged': collapsed ? 'true' : '',
+                                'class': collapsed ? 'vertical-collpsed' : ''
+                            },
+                            'icon-sidebar': collapsed
+                        }, false);
+                    }
+                } else {
+                    document.body.classList.remove('vertical-collpsed');
+                }
+            }, true);
         }
 
         var triggers = topbar.querySelectorAll('[data-bs-toggle="dropdown"]');
@@ -190,61 +416,5 @@ $logoLight = $resolveBackendLogo('logo_light', 'Weline_Admin::assets/images/logo
             closeManualDropdowns();
         }, true);
 
-        var themeToggle = document.getElementById('theme-mode-toggle');
-        if (!themeToggle) {
-            return;
-        }
-
-        function getThemeMode() {
-            var body = document.body;
-            var root = document.documentElement;
-            var mode = body.getAttribute('data-topbar')
-                || body.getAttribute('data-sidebar')
-                || root.getAttribute('data-theme-mode')
-                || root.getAttribute('data-bs-theme');
-            return mode === 'dark' ? 'dark' : 'light';
-        }
-
-        function updateThemeToggleIcon(mode) {
-            var icon = themeToggle.querySelector('i');
-            if (!icon) {
-                return;
-            }
-            icon.className = mode === 'dark' ? 'ri-sun-line' : 'ri-moon-clear-line';
-        }
-
-        function applyThemeMode(mode) {
-            var normalizedMode = mode === 'dark' ? 'dark' : 'light';
-            var body = document.body;
-            var root = document.documentElement;
-
-            body.setAttribute('data-topbar', normalizedMode);
-            body.setAttribute('data-sidebar', normalizedMode);
-            body.setAttribute('data-bs-theme', normalizedMode);
-            root.setAttribute('data-theme-mode', normalizedMode);
-            root.setAttribute('data-bs-theme', normalizedMode);
-
-            updateThemeToggleIcon(normalizedMode);
-        }
-
-        applyThemeMode(getThemeMode());
-
-        themeToggle.addEventListener('click', function (event) {
-            event.preventDefault();
-
-            var nextMode = getThemeMode() === 'dark' ? 'light' : 'dark';
-            applyThemeMode(nextMode);
-
-            if (typeof window.setThemeConfig === 'function') {
-                window.setThemeConfig({
-                    layouts: {
-                        'data-topbar': nextMode,
-                        'data-sidebar': nextMode
-                    },
-                    'theme-mode-switch': nextMode,
-                    'rtl-mode-switch': false
-                });
-            }
-        });
     })();
 </script>

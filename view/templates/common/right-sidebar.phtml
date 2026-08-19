@@ -26,10 +26,13 @@ $rtlModeSwitch = !empty($themeConfigData['rtl-mode-switch']);
     <div data-simplebar class='h-100'>
         <div class='rightbar-title d-flex align-items-center px-3 py-4'>
             <h5 class='m-0 me-2'><?= __('设置') ?></h5>
-            <a href="javascript:void(0);" class="right-bar-toggle ms-auto">
+            <a href="#" class="right-bar-toggle ms-auto" role="button" data-right-bar-toggle-link="1">
                 <i class="mdi mdi-close noti-icon"></i>
             </a>
         </div>
+
+        <!-- 系统维护：清理缓存（仅拥有 Weline_CacheManager::system_cache_clear ACL 的用户可见） -->
+        <w:cache:clear />
 
         <!-- 布局预设配置包 -->
         <hr class='mt-0'/>
@@ -58,7 +61,8 @@ $rtlModeSwitch = !empty($themeConfigData['rtl-mode-switch']);
         <div class="p-4">
             <div class="mb-3">
                 <label class="form-label"><?= __('选择主题模式') ?></label>
-                <select class="form-select theme-choice" id="theme-mode-switch">
+                <select class="form-select theme-choice" id="theme-mode-switch" data-weline-backend-theme-mode data-weline-theme-mode>
+                    <option value="system" <?= ($themeModeSwitch === 'system' || ($themeModeSwitch === '' && !$lightModeSwitch && !$darkModeSwitch)) ? 'selected' : '' ?>><?= __('跟随系统') ?></option>
                     <option value="light" <?= ($themeModeSwitch === 'light' || ($themeModeSwitch === '' && $lightModeSwitch)) ? 'selected' : '' ?>><?= __('明亮模式') ?></option>
                     <option value="dark" <?= ($themeModeSwitch === 'dark' || $darkModeSwitch) ? 'selected' : '' ?>><?= __('暗黑模式') ?></option>
                 </select>
@@ -83,6 +87,17 @@ $rtlModeSwitch = !empty($themeConfigData['rtl-mode-switch']);
 <script>
 (function($) {
     'use strict';
+
+    document.addEventListener('click', function(event) {
+        var target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        if (target.closest('[data-right-bar-toggle-link]')) {
+            event.preventDefault();
+        }
+    });
 
     function initLayoutPresetSettings() {
         // 布局预设映射

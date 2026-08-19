@@ -5,7 +5,7 @@ Version: 1.0.0
 更多支持：https://www.aiweline.com
 File: Main Css File
 */
-/*@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&display=swap");*/
+
 
 #page-topbar {
     position: fixed;
@@ -285,17 +285,26 @@ body[data-layout="horizontal"] .page-content {
 }
 
 .page-title-box {
-    padding-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
 }
 
 .page-title-box .breadcrumb {
     background-color: transparent;
+    margin: 0;
     padding: 0;
+    line-height: 1.35;
 }
 
 .page-title-box h4 {
+    margin: 0;
     font-size: 18px;
     font-weight: 600;
+    line-height: 1.35;
 }
 
 .footer {
@@ -587,7 +596,7 @@ body[data-layout="horizontal"] .footer {
 .vertical-collpsed .vertical-menu {
     position: absolute;
     width: 70px !important;
-    z-index: 5;
+    z-index: 1005;
 }
 
 .vertical-collpsed .vertical-menu .simplebar-mask,
@@ -1129,6 +1138,20 @@ body[data-layout="horizontal"][data-layout-size="boxed"] #page-topbar, body[data
 
 body[data-layout="horizontal"][data-layout-size="boxed"] .container-fluid, body[data-layout="horizontal"][data-layout-size="boxed"] .navbar-header {
     max-width: 1300px;
+}
+
+@media (max-width: 991.98px) {
+    body[data-layout-size="boxed"] #layout-wrapper,
+    body[data-layout-size="boxed"] #page-topbar,
+    body[data-layout-size="boxed"] .footer,
+    body[data-layout-size="boxed"].vertical-collpsed .footer {
+        max-width: 100%;
+    }
+
+    body[data-layout="horizontal"][data-layout-size="boxed"] .container-fluid,
+    body[data-layout="horizontal"][data-layout-size="boxed"] .navbar-header {
+        max-width: 100%;
+    }
 }
 
 /*!
@@ -3276,7 +3299,7 @@ input[switch="dark"]:checked + label {
 }
 
 .bg-pattern {
-    background-image: url("../images/bg.webp");
+    background-image: url("../images/login-lotus-bg.png");
     background-size: cover;
     background-position: center;
 }

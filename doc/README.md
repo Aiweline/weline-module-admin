@@ -26,7 +26,31 @@ Weline Admin 是系统的后台管理模块，提供了完整的后台管理界�
 - 菜单权限管理
 - 操作权限验证
 
-### 5. 日志管理
+### 5. 菜单管理接口权限
+
+后台菜单管理页面的菜单入口使用 `Weline_Admin::system_menu_manager` 作为菜单资源。菜单详情、保存、排序和删除等接口必须额外声明方法级 ACL，并以该菜单资源作为 `parent_source`：详情接口使用 `read` access mode，保存、排序和删除接口使用 `edit` access mode。菜单可见性只控制侧栏入口，不能替代控制器方法级权限。
+
+后台左侧栏菜单搜索会展示匹配分组及其叶子菜单。没有有效路由的分组项仅用于表达层级，搜索结果中必须使用不可点击语义；只有配置了有效路由的菜单项可以作为链接跳转。
+
+左侧栏收起态（`body.vertical-collpsed`）下，hover 顶层菜单项必须横向展开显示标题，有子菜单时向右（`left: 70px`）并紧贴标题下方（`top: 100%`）弹出，保证可移入二级项；禁止对 `.vertical-menu` 使用 `contain: layout`（会迫使 overflow 非 visible 并裁切展开层）。相关样式以 `view/templates/common/left-sidebar.phtml` 为准。
+
+Admin 跨模块读取主题配置键时使用
+`Weline\Backend\Api\View\BackendThemeConfigInterface::SESSION_CONFIG_KEY`，不得引用
+Backend Block。菜单、后台用户上下文、角色与权限读取优先使用 Backend/Acl 发布的
+Api DTO、catalog、reader 和 authorization 契约，不得把目标模块 Model 或 Service
+带入 Admin 控制器。
+
+管理员列表、编辑、状态和角色关联统一使用
+`Weline\Backend\Api\User\BackendUserAdministrationInterface`；当前用户临时数据使用
+`BackendCurrentUserDataInterface`，角色目录使用 `Weline\Acl\Api\Role\RoleCatalogInterface`。
+后台密码登录、尝试次数、Session 身份和 remember token 只调用
+`Weline\Backend\Api\Auth\BackendInteractiveAuthInterface`；Admin 获得的用户对象是不含密码哈希、
+token 密文和 ORM 状态的 `BackendLoginAccount`。`Weline_Admin_Login::password_verified`
+事件中的 `user` 同样是该公开快照；集成模块不得依赖 `BackendUser` Model 或在事件内直接持久化它。
+登录回跳的路由权限判定使用 `AuthorizationServiceInterface`，默认菜单入口使用
+`MenuReaderInterface`，不得回退到 Acl/Backend 内部 Service。
+
+### 6. 日志管理
 - 操作日志记录
 - 系统日志查看
 - 错误日志分析
@@ -35,13 +59,18 @@ Weline Admin 是系统的后台管理模块，提供了完整的后台管理界�
 
 ### 访问后台
 ```
-http://your-domain/admin
+http://your-domain/{backend_key}/admin/login
 ```
+
+`backend_key` 是实例配置的后台区域 Key。裸 `/admin/login` 与 `/admin/login/post`
+必须返回 404，不能进入登录页或继续按前台路由派发。
 
 ### 登录后台
 1. 访问后台登录页面
 2. 输入管理员账户和密码
-3. 验证成功后进入管理面板
+3. 前三次密码登录失败时不显示验证码；第三次失败后刷新登录页显示验证码，后续尝试必须先通过验证码
+4. 勾选“记住我”后，登录凭据会保存为 7 天有效的 remember token；WLS 非标准端口会自动使用端口隔离的 Cookie 名称，避免同一主机上的多个实例互相覆盖
+5. 验证成功后进入管理面板
 
 ### 创建管理员账户
 ```php
@@ -107,6 +136,24 @@ $permission->save();
 - Weline_SystemConfig
 - Weline_Backend
 - Weline_Acl
+
+## 公共后台控制器契约
+
+其他模块的后台控制器统一继承
+`Weline\Admin\Api\Controller\BaseController`。该公共基类保持 Admin 的后台请求初始化、
+布局包装、`fetchBase()`、登录会话与运行时页面缓存行为，并继续由 Framework 的
+`BackendController` 承担后台 Key、ACL 和登录重定向权威校验。使用方必须在
+`etc/module.php` 的 `requires` 与 Composer `require` 中声明 `Weline_Admin`。
+
+`Weline\Admin\Controller\BaseController` 只作为旧代码兼容入口保留，并单向继承上述
+公共实现；新代码不得再跨模块引用这个内部命名空间。
+
+## WLS 视图预热
+
+Admin 通过 `Api/View/ViewWarmupContributionProvider.php` 声明登录页、公共后台模板、
+登录 Provider Hook 和高频静态资源。WLS 由 Theme 的通用预热执行器读取 Framework 编译
+Provider 索引；Theme 不直接引用 Admin 的资源路径。契约说明见
+`app/code/Weline/Theme/doc/worker-view-warmup-contributions.md`。
 
 ## 版本信息
 
@@ -288,4 +335,10 @@ A: 检查缓存配置，清理系统缓存，优化数据库查询。
 A: 使用事件管理器触发 `Weline_Admin::msg` 事件，传入包含 `title` 和 `content` 的数据数组即可。详细用法请参考"系统消息通知机制"章节。
 
 ### Q: 系统消息发送失败怎么办？
-A: 检查消息数据格式是否正确，确保 `title` 和 `content` 字段存在且不为空。开发模式下可以查看错误日志获取详细错误信息。 
+A: 检查消息数据格式是否正确，确保 `title` 和 `content` 字段存在且不为空。开发模式下可以查看错误日志获取详细错误信息。
+
+## 系统通知公共读取契约
+
+跨模块展示未读系统通知时使用
+`Weline\Admin\Api\Notification\SystemNotificationDirectoryInterface`。返回值是不可变
+`SystemNotificationRecord`，不会暴露 Admin ORM、查询条件或可变 Model 状态。
